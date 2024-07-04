@@ -1,0 +1,207 @@
+\newif\ifslides
+\slidestrue
+\newif\ifnotes
+\notesfalse
+
+${ latex_packages/common.sty() }
+$-- (For syntax highlighting)
+
+\AtBeginDocument{
+    \slideslikebackgrounds
+}
+
+\let\unmodified@beamer@framenotesbegin\beamer@framenotesbegin
+\newenvironment{aside}[1][]{
+    \def\exampletitle{#1}%
+    \def\beamer@framenotesbegin{\frametitle{Aside: \exampletitle}\unmodified@beamer@framenotesbegin}%
+    \relax
+}{
+    \let\beamer@framenotesbegin\unmodified@beamer@framenotesbegin
+    \relax
+}
+
+\let\unmodified@beamer@framenotesbegin\beamer@framenotesbegin
+\renewenvironment{example}[1][]{
+    \setcounter{examplesolutionpartcounter}{0}
+    \def\exampletitle{#1}%
+    \def\beamer@framenotesbegin{\frametitle{Example: \exampletitle}\unmodified@beamer@framenotesbegin}%
+    \def\examplesolution{\def\beamer@framenotesbegin{\frametitle{Example: \exampletitle{} -- Solution}\unmodified@beamer@framenotesbegin}}%
+    \def\examplesolutionpart{\stepcounter{examplesolutionpartcounter}\def\beamer@framenotesbegin{\frametitle{Example: \exampletitle{} -- Solution}\framesubtitle{Part~\semibold{(\alph{examplesolutionpartcounter})}}\unmodified@beamer@framenotesbegin}}%
+    \def\examplesolutionsubpart{\stepcounter{examplesolutionsubpartcounter}\def\beamer@framenotesbegin{\frametitle{Example: \exampletitle{} -- Solution}\framesubtitle{Part~\semibold{(\alph{examplesolutionpartcounter}, \roman{examplesolutionsubpartcounter})}}\unmodified@beamer@framenotesbegin}}%
+    \relax
+}{
+    \let\beamer@framenotesbegin\unmodified@beamer@framenotesbegin
+    \relax
+}
+
+
+\mode<presentation>
+
+\RequirePackage{tcolorbox}
+
+
+% Create beamer theme:
+
+\useinnertheme{rounded}
+\useoutertheme{infolines}
+\setbeamerfont{block title}{size=\large}
+\setbeamertemplate{itemize item}[square] % or triangle, circle, ball...
+\setbeamertemplate{itemize subitem}[triangle]
+\setbeamertemplate{itemize subsubitem}[circle]
+\setbeamertemplate{enumerate item}[square] % or triangle, circle, ball...
+\setbeamertemplate{enumerate subitem}[square]
+\setbeamertemplate{enumerate subsubitem}[square]
+
+
+% Setting Colours
+
+\setbeamercolor{background canvas}{bg = BackgroundColour}
+\setbeamercolor{normal text}{bg = BackgroundColour, fg = ForegroundColour}
+\setbeamercolor{titlelike}{bg = Green, fg = BackgroundColour}
+\setbeamercolor{frametitle}{bg = Surface5, fg = ForegroundColour}
+\setbeamercolor{palette primary}{bg = Accent1, fg = BackgroundColour}
+\setbeamercolor{palette secondary}{bg = Accent1_3, fg = ForegroundColour}
+\setbeamercolor{palette tertiary}{bg = Accent1_4, fg = ForegroundColour}
+\setbeamercolor{palette quaternary}{bg = BackgroundColour_5, fg = Accent4}
+\setbeamercolor{palette sidebar primary}{bg = ForegroundColour, fg = Accent3_4}
+\setbeamercolor{palette sidebar secondary}{bg = Accent2_4, fg = ForegroundColour}
+\setbeamercolor{palette sidebar tertiary}{bg = ForegroundColour, fg = Accent2_4}
+\setbeamercolor{palette sidebar quaternary}{bg = ForegroundColour, fg = Accent4_4}
+\setbeamercolor{itemize item}{fg = Accent2}
+\setbeamercolor{itemize subitem}{fg = Accent2_3}
+\setbeamercolor{itemize subsubitem}{fg = Accent2_4}
+% enumerate items (for some reason ot `enumerate item` but `item projected')
+\setbeamercolor{item projected}{bg = Accent1, fg = BackgroundColour}
+\setbeamercolor{subitem projected}{bg = Accent1_3, fg = BackgroundColour}
+\setbeamercolor{subsubitem projected}{bg = Accent1_4, fg = BackgroundColour}
+\setbeamerfont{item projected}{series=\bfseries}
+\setbeamerfont{subitem projected}{series=\bfseries}
+\setbeamerfont{subsubitem projected}{series=\bfseries}
+\setbeamercolor{math text}{fg = Accent1}
+
+% bold title
+\setbeamerfont{title}{series=\bfseries,parent=structure,size=\LARGE}
+% normal author and date, not bold
+\setbeamerfont{author}{size=\large}
+\setbeamerfont{date}{size=\large,series=\normalfont}
+
+\usefonttheme[onlymath]{serif}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+
+
+\AtBeginSection[]
+{
+    \begin{frame}[t]
+        \frametitle{Section \thesection}
+        \begin{tcolorbox}[
+                colframe = BackgroundColour,
+                colback = Accent1_4,
+                coltext = ForegroundColour
+            ]
+            \centering\Large\secname
+        \end{tcolorbox}
+    \end{frame}
+}
+
+\AtBeginSubsection[]
+{
+    
+\begin{frame}[t]
+    \frametitle{Section \thesection.\thesubsection}
+    \begin{tcolorbox}[
+            colframe = BackgroundColour,
+            colback = Accent1_4,
+            coltext = ForegroundColour
+        ]
+        \centering\Large\secname\\[1em]
+        \centering\large\subsecname
+    \end{tcolorbox}
+\end{frame}
+}
+
+\AtBeginSubsubsection[]
+{
+  \begin{frame}[t]
+    \frametitle{Section \thesection.\thesubsection.\thesubsubsection}
+    \begin{tcolorbox}[
+            colframe = BackgroundColour,
+            colback = Accent1_4,
+            coltext = ForegroundColour
+        ]
+        \centering\Large\secname\\[1em]
+        \centering\large\subsecname
+    \end{tcolorbox}
+    \centering
+    \semibold{\Large\color{Accent1}\subsubsecname}
+  \end{frame}
+}
+
+
+\setbeamercolor{section number projected}{bg=BackgroundColour,fg=Accent1_2}
+% \setbeamertemplate{section in toc}[square]
+
+
+\setbeamercolor{subsection number projected}{bg=Green,fg=Green}
+\setbeamerfont{subsection in toc}{size=\footnotesize}
+\setbeamertemplate{subsection in toc}[square]
+
+\setbeamertemplate{section in toc}{%
+    \leavevmode\leftskip=2.5ex%
+  \llap{%
+    \usebeamerfont*{section number projected}%
+    \usebeamercolor[bg]{section number projected}%
+    \vrule width2.25ex height1.85ex depth.4ex%
+    \hskip-2.25ex%
+    \hbox to2.25ex{\hfil\color{fg}\inserttocsectionnumber\hfil}}%
+  \kern1.25ex\color{ForegroundColour}\inserttocsection\par}
+
+
+\def\defaultitemlabel{\raisebox{0.5\height}{\tiny$$\color{Red}\blacksquare$$}}
+\def\defaultitemlabeltwo{\raisebox{0.5\height}{\tiny$$\color{Red_3}\bullet$$}}
+
+\newtcolorbox{equationbox}{
+    colback = BackgroundColour,
+    colframe = Accent4,
+    coltext = ForegroundColour,
+    bottom = -0.5em,
+}
+
+\ExplSyntaxOn
+\newcommand\swaponslide[3]{%
+  \only<-\fp_to_decimal:n{#1-1}>{#2}\only<#1->{#3}%
+}
+\ExplSyntaxOff
+
+
+\AtBeginDocument{
+  \maketitle
+}
+
+\newcommand*{\overlaynumber}{\number\beamer@slideinframe}
+
+\newenvironment{subquestions}{
+    \setbeamertemplate{enumerate item}{\semibold{\color{Accent1}(\alph{enumi})\normalcolor}}
+    \begin{enumerate}
+}{
+    \end{enumerate}
+    \setbeamertemplate{enumerate item}{\insertenumlabel}
+}
+\newenvironment{subsubquestions}{
+    \setbeamertemplate{enumerate subitem}{\semibold{\color{Accent1_3}(\roman{enumii})\normalcolor}}
+    \begin{enumerate}
+}{
+    \end{enumerate}
+    \setbeamertemplate{enumerate subitem}{\insertsubenumlabel}
+}
+
+\usepackage{hyperref}
+
+\hypersetup{
+    colorlinks = true,
+    linkcolor =,
+    urlcolor = Red,
+    citecolor = Red,
+    pdftitle={\@pdftitle},
+    pdfauthor={\@author},
+}

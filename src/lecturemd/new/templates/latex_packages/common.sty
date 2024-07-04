@@ -1,0 +1,327 @@
+% pass table to xcolor
+\PassOptionsToPackage{table}{xcolor}
+
+\RequirePackage{iftex}
+\ifnotes
+    \RequirePackage[fleqn]{amsmath}
+    \RequirePackage{amssymb}
+\fi
+\RequirePackage{siunitx}
+
+\RequirePackage{tikz}
+\usetikzlibrary{
+    angles,
+    quotes,
+    positioning,
+    calc,
+    arrows,
+    arrows.meta,
+    fit,
+    fadings,
+    decorations.pathmorphing,
+    decorations.pathreplacing,
+    decorations.markings,
+    decorations.shapes,
+    calligraphy,
+    shapes.misc,
+    intersections,
+    tikzmark,
+}
+
+
+\RequirePackage[sfdefault,light]{FiraSans} %% option 'sfdefault' activates Fira Sans as the default text font
+% only load fontenc if we're not using XeLaTeX or LuaLaTeX. Use iftex package
+\ifPDFTeX
+    \RequirePackage[T1]{fontenc}
+\fi
+\renewcommand*\oldstylenums[1]{{\firaoldstyle #1}}
+\newcommand{\semibold}[1]{{\firabook #1}}
+% \newcommand{\semibold}[1]{\textbf{#1}}
+
+\setlength\parskip{1.5em}
+\newdimen\singlelineheight
+\setlength\singlelineheight{1em}
+
+\newcommand{\emphasis}[1]{%
+    {\itshape\semibold{\color{Blue}#1}}%
+}
+
+\newcommand{\setitemsep}[1]{\let\olditemsep\itemsep\setlength{\itemsep}{#1}}
+\newcommand{\resetitemsep}{\let\itemsep\olditemsep}
+\newcommand{\addtoitemsep}[1]{\addtolength{\itemsep}{#1}}
+
+\newcommand{\centernodex}[1]{
+    % Expand the current bounding box such that the node (or coordinate) #1 is at the center horizontally.
+    \path let 
+        \p1 = ($$(current bounding box.south west) - (#1)$$),
+        \p2 = ($$(current bounding box.north east) - (#1)$$),
+        \p3 = (#1),
+    in  
+        ({-max(abs(\x1), abs(\x2)) + \x3}, {\y1 + \y3}) rectangle ({max(abs(\x1), abs(\x2)) + \x3}, {\y2 + \y3});
+}
+
+\newcommand{\centernodey}[1]{
+    % Expand the current bounding box such that the node (or coordinate) #1 is at the center vertically.
+    \path let 
+        \p1 = ($$(current bounding box.south west) - (#1)$$),
+        \p2 = ($$(current bounding box.north east) - (#1)$$),
+        \p3 = (#1),
+    in  
+        ({\x1 + \x3}, {-max(abs(\y1), abs(\y2)) + \y3}) rectangle ({\x2 + \x3}, {max(abs(\y1), abs(\y2)) + \y3});
+}
+
+\newcommand{\centernodexy}[1]{
+    % Expand the current bounding box such that the node (or coordinate) #1 is at the center vertically and horizontally.
+    \path let 
+        \p1 = ($$(current bounding box.south west) - (#1)$$),
+        \p2 = ($$(current bounding box.north east) - (#1)$$),
+        \p3 = (#1),
+    in  
+        ({-max(abs(\x1), abs(\x2)) + \x3}, {-max(abs(\y1), abs(\y2)) + \y3}) rectangle ({max(abs(\x1), abs(\x2)) + \x3}, {max(abs(\y1), abs(\y2)) + \y3});
+}
+
+${ latex_packages/tikzcard.sty() }
+
+\tikzcardset{
+    colour = BackgroundColour,
+    rounded corners = 0.5em,
+    glow,
+    glow colour = BackgroundColour_5,
+    glow background = transparent,
+    glow radius = 1em,
+    glow offset = {1mm, -1mm},
+    glow grow = {-0.3em}
+}
+
+\RequirePackage{subcaption}
+
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{skins}
+\tcbuselibrary{breakable}
+
+\ExplSyntaxOn
+
+\newcommand{\lecture_new_tcolorbox}[4][]{
+    % #1 - Any extra options to pass to newtcolorbox
+    % #2 - The name of the new environment
+    % #3 - The base colour of the box
+    % #4 - Prepended to the title of the box
+    \newtcolorbox{#2}[1][]{%
+        enhanced,
+        colback = BackgroundColour,
+        colframe = #3,
+        coltitle = BackgroundColour,
+        colbacktitle = #3,
+        coltext = ForegroundColour,
+        after = \normalcolor, % colour seems to leak into the next paragraph without this. This is a bug with tcolorbox.
+        title = {\bfseries #4\c_colon_str{}~##1},
+        breakable,
+        lines~before~break = 4,
+        overlay~first = {
+            \path[fill = #3] ($$(interior.south~east) + (-0.5cm, 0.5cm)$$) -- ++ (0.35cm, 0) -- ++ ({-cos(60) * 0.35cm}, {-sin(60) * 0.35cm}) node[left, scale = 0.75, #3] {\textit{continued.}} -- cycle;
+            \draw[dashed, #3, very~thick] ($$(interior.south~east) + (0, -0.25mm)$$) -- ($$(interior.south~west) + (0, -0.25mm)$$);
+        },
+        overlay~middle = {
+            \path[fill = #3] ($$(interior.south~east) + (-0.5cm, 0.5cm)$$) -- ++ (0.35cm, 0) -- ++ ({-cos(60) * 0.35cm}, {-sin(60) * 0.35cm}) node[left, scale = 0.75, #3] {\textit{continued.}} -- cycle;
+            \draw[dashed, #3, very~thick] ($$(interior.south~east) + (0, -0.25mm)$$) -- ($$(interior.south~west) + (0, -0.25mm)$$);
+            \draw[dashed, #3, very~thick] ($$(interior.north~east) + (0, 0.25mm)$$) -- ($$(interior.north~west) + (0, 0.25mm)$$);
+        },
+        overlay~last = {
+            \draw[dashed, #3, very~thick] ($$(interior.north~east) + (0, 0.25mm)$$) -- ($$(interior.north~west) + (0, 0.25mm)$$);
+        },
+        topsep~at~break = 0.5em,
+        bottomsep~at~break = 1em,
+        before~upper = {\setlength{\parskip}{1.5em}\setlength{\parindent}{17pt}\slideslikebackgrounds},
+        before~lower = {\setlength{\parskip}{1.5em}\setlength{\parindent}{17pt}\slideslikebackgrounds},
+        segmentation~style = {
+            solid,
+            draw = #3,
+            very~thick,
+            shorten~> = 2cm,
+            shorten~< = 2cm,
+        },
+        middle = 2em,
+        #1
+    }
+}
+
+\newcommand{\lecture_new_tcolorbox_numbered}[4][]{
+    % #1 - Any extra options to pass to newtcolorbox
+    % #2 - The name of the new environment
+    % #3 - The base colour of the box
+    % #4 - Prepended to the title of the box
+    \newtcolorbox[
+        auto~counter,
+        number~within=section,
+        number~freestyle = {\noexpand\arabic{\tcbcounter}}
+    ]{#2}[1][]{%
+        enhanced,
+        colback = BackgroundColour,
+        colframe = #3,
+        coltitle = BackgroundColour,
+        colbacktitle = #3,
+        coltext = ForegroundColour,
+        after = \normalcolor, % colour seems to leak into the next paragraph without this. This is a bug with tcolorbox.
+        title = {\bfseries #4 ~\thetcbcounter{}\c_colon_str{} ~##1},
+        breakable,
+        lines~before~break = 4,
+        overlay~first = {
+            \path[fill = #3] ($$(interior.south~east) + (-0.5cm, 0.5cm)$$) -- ++ (0.35cm, 0) -- ++ ({-cos(60) * 0.35cm}, {-sin(60) * 0.35cm}) node[left, scale = 0.75, #3] {\textit{continued.}} -- cycle;
+            \draw[dashed, #3, very~thick] ($$(interior.south~east) + (0, -0.25mm)$$) -- ($$(interior.south~west) + (0, -0.25mm)$$);
+        },
+        overlay~middle = {
+            \path[fill = #3] ($$(interior.south~east) + (-0.5cm, 0.5cm)$$) -- ++ (0.35cm, 0) -- ++ ({-cos(60) * 0.35cm}, {-sin(60) * 0.35cm}) node[left, scale = 0.75, #3] {\textit{continued.}} -- cycle;
+            \draw[dashed, #3, very~thick] ($$(interior.south~east) + (0, -0.25mm)$$) -- ($$(interior.south~west) + (0, -0.25mm)$$);
+            \draw[dashed, #3, very~thick] ($$(interior.north~east) + (0, 0.25mm)$$) -- ($$(interior.north~west) + (0, 0.25mm)$$);
+        },
+        overlay~last = {
+            \draw[dashed, #3, very~thick] ($$(interior.north~east) + (0, 0.25mm)$$) -- ($$(interior.north~west) + (0, 0.25mm)$$);
+        },
+        topsep~at~break = 0.5em,
+        bottomsep~at~break = 1em,
+        before~upper = {\setlength{\parskip}{1.5em}\setlength{\parindent}{17pt}\slideslikebackgrounds},
+        before~lower = {\setlength{\parskip}{1.5em}\setlength{\parindent}{17pt}\slideslikebackgrounds},
+        segmentation~style = {
+            solid,
+            draw = #3,
+            very~thick,
+            shorten~> = 2cm,
+            shorten~< = 2cm,
+        },
+        middle = 2em,
+        #1
+    }
+}
+
+
+\keys_define:nn {newlecturebox} {
+    name .tl_set:N = \l_newlecturebox_name_tl,
+    name .value_required:n = true,
+    base~color .tl_set:N = \l_newlecturebox_base_color_tl,
+    base~color .value_required:n = true,
+    title~prefix .tl_set:N = \l_newlecturebox_title_prefix_tl,
+    title~prefix .initial:n = {},
+    numbered .bool_set:N = \l_newlecturebox_numbered_bool,
+    numbered .initial:n = false,
+    numbered .default:n = true,
+}
+
+\newcommand{\newlectureboxsetdefault}{
+    \keys_set:nn {newlecturebox} {
+        name = {},
+        base~color = {},
+        title~prefix = {},
+        numbered = false
+    }
+}
+
+% generate \exp_args:Nxxx
+\exp_args_generate:n {xxx}
+
+\newcommand{\newlecturebox}[1]{
+    \newlectureboxsetdefault % can't use a group like I normally would since this would prevent newtcolorbox from creating a global environment
+    \keys_set:nn {newlecturebox} {#1}
+    \let\basecolor\l_newlecturebox_base_color_tl
+    \bool_if:NTF \l_newlecturebox_numbered_bool {
+        \exp_args:Nxxx \lecture_new_tcolorbox_numbered{\l_newlecturebox_name_tl}{\basecolor}{\l_newlecturebox_title_prefix_tl}
+    }{
+        \exp_args:Nxxx \lecture_new_tcolorbox{\l_newlecturebox_name_tl}{\basecolor}{\l_newlecturebox_title_prefix_tl}
+    }
+    \newlectureboxsetdefault
+}
+
+\ExplSyntaxOff
+
+\newlecturebox{name = definitionbox, base color = Blue,    title prefix = Definition}
+\newlecturebox{name = figurebox,     base color = ForegroundColour}
+
+% \RequirePackage{\packagepath/descriptions}
+% \RequirePackage{\packagepath/nicetables}
+% \input{\packagepath/mathlabels}
+
+${ latex_packages/descriptions.sty() }
+${ latex_packages/nicetables.sty() }
+${ latex_packages/mathlabels.tex() }
+
+\newcommand{\pdftitle}[1]{%
+    \def\@pdftitle{#1}%
+}
+
+\pdftitle{\@title}
+
+\newcommand{\slideslikebackgrounds}{
+    \tikzcardset{
+        colour = Surface7,
+        rounded corners = 0.5em,
+        glow,
+        glow colour = Surface5,
+        glow background = transparent,
+        glow radius = 1em,
+        glow offset = {1mm, -1mm},
+        glow grow = {-0.3em}
+    }
+
+    \tikzset{
+        label node/.append style = {
+            inner sep = 0.25pt,
+            outer sep = 3pt,
+            text = ForegroundColour,
+            fill = Surface7,
+            fill opacity = 0.75,
+            text opacity = 1,
+        },
+    }
+    \nicetableset{
+        array stretch       = 1.5,
+        header cell style   = \color{ForegroundColour}\scshape\bfseries,
+        header row color    = Red_4,
+        row colors          = {Surface7, Surface5},
+        every cell style    = \color{ForegroundColour},
+        separator color     = Red_4,
+        row separator       = false,
+        remove outer column separators = true,
+        header separator = false,
+    }
+}
+
+\newcommand{\noteslikebackgrounds}{
+    \tikzcardset{
+        colour = BackgroundColour,
+        rounded corners = 0.5em,
+        glow,
+        glow colour = Surface3_5,
+        glow background = transparent,
+        glow radius = 1em,
+        glow offset = {1mm, -1mm},
+        glow grow = {-0.3em}
+    }
+
+    \tikzset{
+        label node/.append style = {
+            inner sep = 0.25pt,
+            outer sep = 3pt,
+            text = ForegroundColour,
+            fill = BackgroundColour,
+            fill opacity = 0.75,
+            text opacity = 1,
+        }
+    }
+
+    \nicetableset{
+        array stretch       = 1.5,
+        header cell style   = \color{BackgroundColour}\scshape\bfseries,
+        header row color    = Accent1,
+        row colors          = {Surface7, Surface6},
+        every cell style    = \color{ForegroundColour},
+        separator color     = ForegroundColour,
+        row separator       = false,
+    }
+}
+
+\tikzset{
+    rounded label node/.append style = {
+        label node,
+        rounded corners = 0.5em,
+    }
+}
+

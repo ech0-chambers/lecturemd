@@ -1,0 +1,394 @@
+Screen {
+    background: $clr-background;
+    color: $clr-foreground;
+    & * {
+        max-width: 132;
+    }
+}
+
+Collapsible {
+    height: auto;
+    content-align: left top;
+    background: $clr-background;
+    border: round $clr-accent1-3;
+    & CollapsibleTitle {
+        color: $clr-accent1;
+        &:focus,
+        &:hover {
+            background: $clr-red-4;
+        }
+    }
+} 
+
+Tooltip {
+    background: $clr-info-4;
+    color: $clr-info-1;
+    max-width: 42;
+}
+
+*.tooltip:hover {
+    color: $clr-info-3;
+}
+
+* {
+    scrollbar-background: $clr-background-4;
+    scrollbar-background-active: $clr-background-4;
+    scrollbar-background-hover: $clr-background-4;
+    scrollbar-color: $clr-foreground;
+    scrollbar-color-active: $clr-accent1-3;
+    scrollbar-color-hover: $clr-accent1;
+    scrollbar-corner-color: $clr-background;
+}
+
+
+Horizontal.field {
+    layout: horizontal;
+    height: 3;
+    & Input {
+        width: 50%;
+        dock: right;
+        background: $clr-background-4;
+        outline: wide $clr-accent1-3;
+        padding: 0;
+
+        &:hover {
+            background: $clr-background-5;
+            outline: wide $clr-accent1;
+        }
+        &:focus {
+            background: $clr-background-5;
+            outline: wide $clr-accent1-2;
+        }
+        & > .input--cursor{
+            color: $clr-blue-4;
+        }
+    }
+    & Label {
+        content-align: left middle;
+        height: 3;
+    }
+    & Select {
+        width: 50%;
+        dock: right;
+        background: $clr-background;
+        height: 3;
+        padding: 0;
+
+        & > SelectCurrent {
+            outline: tall $clr-accent1-3;
+            background: $clr-background-4;
+        }
+
+        & > SelectCurrent > Static:focus,
+        & > SelectCurrent > Static:hover {
+            background: $clr-background-5;
+        }
+
+        &.-expanded > SelectOverlay {
+            background: $clr-background-5;
+            border: wide $clr-accent1-3;
+            color: $clr-foreground;
+            padding: 1;
+            min-width: 0;
+            max-width: 1fr;
+        }
+
+        &:focus > SelectCurrent {
+            background: $clr-background-5;
+        }
+    }
+    & Switch {
+        dock: right;
+        border: round $clr-accent1-3;
+
+        & > .switch--slider {
+            background: $clr-background-2;
+            color: $clr-error-1;
+        }
+
+        &.-on > .switch--slider {
+            background: $clr-background-4;
+            color: $clr-success;
+        }
+
+        &:hover,
+        &:focus {
+            border: round $clr-accent1;
+        }
+    }
+}
+
+OptionList > .option-list--option-hover {
+    background: $clr-blue-5;
+}
+
+OptionList:focus > .option-list--option-highlighted {
+    background: $clr-blue-4;
+    color: $clr-blue;
+    text-style: bold;
+}
+
+Horizontal.field.tall {
+    height: 5;
+}
+
+Vertical.panel {
+    border-title-align: left;
+    border: round $clr-accent1-3;
+    padding: 1;
+    margin-right: 1;
+    height: auto;
+}
+
+
+Button.save {
+    background: $clr-success-3;
+    border-top: tall $clr-success-4;
+    border-bottom: tall $clr-success;
+    color: $clr-foreground;
+    margin: 1;
+    dock: right;
+
+    &:hover {
+        background: $clr-success;
+        border-top: tall $clr-success-3;
+        border-bottom: tall $clr-success-2;
+    }
+}
+
+Button.warning {
+    background: $clr-warning-3;
+    border-top: tall $clr-warning-4;
+    border-bottom: tall $clr-warning;
+    color: $clr-foreground;
+    margin: 1;
+    dock: left;
+
+    &:hover {
+        background: $clr-warning;
+        border-top: tall $clr-warning-3;
+        border-bottom: tall $clr-warning-2;
+    }
+}
+
+Horizontal.buttons {
+    dock: bottom;
+    height: 6;
+    background: $clr-background-5;
+    border-top: wide $clr-accent1-3;
+    margin-bottom: 1;
+    padding-bottom: 1;
+    padding-left: 2;
+    padding-right: 2;
+}
+
+.filters-grid Horizontal {
+    height: 2;
+    width: 100%;
+    content-align: left middle;
+    &.header * {
+        height: 1;
+        text-style: bold;
+        background: $clr-background-4;
+    }
+    & .file {
+        content-align: left middle;
+        width: 2fr;
+    }
+    & .order {
+        width: 1fr;
+        content-align: center middle;
+    }
+    & .remove {
+        width: 1fr;
+        content-align: center middle;
+    }
+    & .source {
+        content-align: center middle;
+        width: 1fr;
+    }
+}
+
+Button.remove {
+    border: none;
+    background: $clr-background-5;
+    height: 1;
+
+    &:hover {
+        background: $clr-red-4;
+    }
+}
+
+.filters-grid {
+    height: auto;
+}
+
+.filters-add-container{
+    padding: 1;
+    height: auto;
+    border-title-align: left;
+    border: round $clr-green;
+    & > * {
+        height: auto;
+    }
+    & Input {
+        width: 1fr;
+        margin-right: 1;
+        margin-left: 1;
+    }
+    & Label {
+        width: 1fr;
+    }
+    & Button {
+        width: 1fr;
+        border: none;
+        background: $clr-background-5;
+        height: 1;
+        margin-top: 1;
+        margin-bottom: 1;
+        &:hover {
+            background: $clr-green-4;
+        }
+    }
+    & Horizontal {
+        &.header {
+            background: $clr-background-4;
+            & * {
+                text-style: bold;
+            }
+        }
+        & .file {
+            content-align: left middle;
+            width: 2fr;
+        }
+        & .order {
+            content-align: center middle;
+            width: 1fr;
+        }
+        & .add {
+            content-align: center middle;
+            width: 1fr;
+        }
+        & .source {
+            content-align: center middle;
+            width: 1fr;
+        }
+    }
+}
+
+.row  > Input {
+    outline: wide $clr-accent1-3;
+    padding-left: 0;
+    padding-right: 0;
+    background: $clr-background-4;
+    &:hover,
+    &:focus {
+        background: $clr-background-5;
+        outline: wide $clr-accent1;
+    }
+    & > .input--cursor{
+        color: $clr-blue-4;
+    }
+}
+
+
+
+.preambles-grid,
+.styles-grid {
+    height: auto;
+}
+
+.preambles-grid Horizontal,
+.styles-grid Horizontal {
+    height: 2;
+    width: 100%;
+    content-align: left middle;
+    &.header * {
+        height: 1;
+        text-style: bold;
+        background: $clr-background-4;
+    }
+    & .file {
+        content-align: left middle;
+        width: 2fr;
+    }
+    & .remove {
+        width: 1fr;
+        content-align: center middle;
+    }
+    & .source {
+        content-align: center middle;
+        width: 1fr;
+    }
+}
+
+
+.preambles-add-container,
+.styles-add-container {
+    padding: 1;
+    height: auto;
+    border-title-align: left;
+    border: round $clr-green;
+    & > * {
+        height: auto;
+    }
+    & Input {
+        width: 1fr;
+        margin-right: 1;
+        margin-left: 1;
+    }
+    & Label {
+        width: 1fr;
+    }
+    & Button {
+        width: 1fr;
+        border: none;
+        background: $clr-background-5;
+        height: 1;
+        margin-top: 1;
+        margin-bottom: 1;
+        &:hover {
+            background: $clr-green-4;
+        }
+    }
+    & Horizontal {
+        &.header {
+            background: $clr-background-4;
+            & * {
+                text-style: bold;
+            }
+        }
+        & .file {
+            content-align: left middle;
+            width: 2fr;
+        }
+        & .add {
+            content-align: center middle;
+            width: 1fr;
+        }
+    }
+}
+
+.preambles-add-horizontal,
+.styles-add-horizontal {
+    height: auto;
+    & > * {
+        width: 1fr;
+        height: 3;
+        content-align: left middle;
+    }
+    & > Input {
+        outline: wide $clr-accent1-3;
+        padding-left: 0;
+        padding-right: 0;
+        background: $clr-background-4;
+        &:hover,
+        &:focus {
+            background: $clr-background-5;
+            outline: wide $clr-accent1;
+        }
+        & > .input--cursor{
+            color: $clr-blue-4;
+        }
+    }
+}

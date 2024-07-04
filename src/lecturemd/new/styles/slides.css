@@ -1,0 +1,173 @@
+p {
+    line-height: 1.675rem;
+    text-indent: 1cm;
+    text-align: justify;
+    margin-block: 1.75rem;
+}
+
+li {
+    text-align: justify;
+    list-style-type: square;
+    font-weight: 300;
+}
+
+li::marker {
+    color: var(--clr-accent2);
+    font-size: 1.5em;
+}
+
+li:has(span.display) {
+    list-style-type: none;
+}
+
+li li::marker {
+    color: var(--clr-accent2-3);
+    content: "▶";
+    font-size: 1rem;
+}
+
+li li {
+    padding-left: 1ch;
+}
+
+:root {
+    --r-background-color: var(--clr-background);
+    --r-main-font: 'Fira Sans', Helvetica, sans-serif;
+    --r-main-font-size: 24px;
+    --r-main-color: var(--clr-foreground);
+    --r-block-margin: 20px;
+    --r-heading-margin: 0 0 20px 0;
+    --r-heading-font: 'Fira Sans', Helvetica, sans-serif;
+    --r-heading-color: var(--clr-foreground);
+    --r-heading-line-height: 1.2;
+    --r-heading-letter-spacing: normal;
+    --r-heading-text-transform: none;
+    --r-heading-text-shadow: none;
+    --r-heading-font-weight: 600;
+    --r-heading1-text-shadow: none;
+    --r-heading1-size: 2.5em;
+    --r-heading2-size: 1.6em;
+    --r-heading3-size: 1.3em;
+    --r-heading4-size: 1em;
+    --r-code-font: monospace;
+    --r-link-color: var(--crl-blue);
+    --r-link-color-dark: var(--crl-blue-3);
+    --r-link-color-hover: var(--clr-blue-4);
+    --r-selection-background-color: var(--clr-orange);
+    --r-selection-color: var(--clr-foreground);
+    font-weight: 300;
+    --tcolorbox-border-width: 2px;
+    --tcolorbox-border-radius: 0.5em;
+    --tcolorbox-title-separator: 2ch;
+    --tcolorbox-inner-padding: 1em;
+  }
+
+.reveal .slides{
+    text-align: justify;
+}
+
+span.math {
+    color: var(--clr-accent1);
+    text-align: center;
+    font-weight: 100;
+}
+
+div.note > p,
+span.note {
+    font-style: italic;
+    color: var(--clr-foreground);
+}
+
+div.note > p::before,
+span.note::before {
+    content: "Note: ";
+    font-weight: 400;
+    font-style: italic;
+    color: var(--clr-red);
+    display: inline;
+}
+
+.tcolorbox.definition {
+    --tcolorbox-main-color: var(--clr-blue);
+}
+
+.tcolorbox {
+    border-width: var(--tcolorbox-border-width);
+    border-style: solid;
+    border-color: var(--tcolorbox-main-color);
+    border-radius: var(--tcolorbox-border-radius);
+    padding-block-start: 0;
+    box-sizing: border-box;
+    background: var(--clr-background);
+    color: var(--clr-foreground);
+    padding-inline: var(--tcolorbox-inner-padding);
+    padding-block-end: 1em;
+}
+
+.tcolorbox > div.title {
+    background-color: var(--tcolorbox-main-color);
+    color: var(--clr-background);
+    font-weight: 600;
+    width: calc(100% + 2 * var(--tcolorbox-border-width) + 2 * var(--tcolorbox-inner-padding));
+    margin-left: calc(-1*var(--tcolorbox-border-width) - var(--tcolorbox-inner-padding));
+    margin-top: calc(-1*var(--tcolorbox-border-width));
+    border-top-left-radius: var(--tcolorbox-border-radius);
+    border-top-right-radius: var(--tcolorbox-border-radius);
+}
+
+.tcolorbox > div.title > p {
+    margin-block-start: 0;
+    padding-block: 0.25em;
+    text-indent: 0;
+}
+
+.tcolorbox > div.title > p::before {
+    content: "";
+    font-weight: 600;
+    color: var(--clr-background);
+    padding-right: var(--tcolorbox-title-separator);
+    margin-left: 1.25em;
+}
+
+.tcolorbox.example > div.title > p::before {
+    counter-increment: exmapleCounter;
+    content: "Example " counter(exmapleCounter) ": ";
+}
+
+.tcolorbox.definition > div.title > p::before {
+    content: "Definition: ";
+}
+
+.tcolorbox.aside > div.title > p::before {
+    content: "Aside: ";
+}
+
+.latex-macro.emphasis{
+    font-style: italic;
+    font-weight: 400;
+    color: var(--clr-cyan);
+}
+
+h1, h2, h3, h4 {
+    text-align: center;
+}
+
+
+
+figure {
+    display: flex;
+    flex-direction: column;
+}
+
+figure > img,
+figure > figcaption {
+    margin-inline: auto !important;
+}
+
+figure > img {
+    background-color: var(--clr-surface6);
+    border-radius: 0.5em;
+    box-shadow: 5px 5px 15px 10px var(--clr-background-5);
+    margin-bottom: 2em;
+    padding: 1ch;
+}

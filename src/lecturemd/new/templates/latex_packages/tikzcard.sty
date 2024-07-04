@@ -1,0 +1,317 @@
+\ProvidesPackage{tikzcard}
+
+\RequirePackage{tikz}
+\usetikzlibrary{
+    positioning,
+    calc,
+    fit,
+    fadings,
+}
+
+
+\pgfdeclarelayer{pictureshadow}
+\pgfdeclarelayer{picturebackground}
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{foreground}
+\pgfsetlayers{pictureshadow,picturebackground,background,main,foreground}
+
+
+
+\ExplSyntaxOn
+
+\keys_define:nn {tikzcard}{
+    padding .dim_set:N = \l_tikzcard_padding_dim,
+    padding .initial:n = {-1pt},
+    padding~x .dim_set:N = \l_tikzcard_padding_x_dim,
+    padding~x .initial:n = {0.5cm},
+    padding~y .dim_set:N = \l_tikzcard_padding_y_dim,
+    padding~y .initial:n = {0.5cm},
+    colour .tl_set:N = \l_tikzcard_colour_tl,
+    colour .initial:n = {BackgroundColour},
+    border~style .tl_set:N = \l_tikzcard_border_style_tl,
+    border~style .initial:n = {},
+    rounded~corners .dim_set:N = \l_tikzcard_rounded_corners_dim,
+    rounded~corners .initial:n = {0pt},
+    node .tl_set:N = \l_tikzcard_node_tl,
+    node .initial:n = {current~bounding~box},
+    background~layer .tl_set:N = \l_tikzcard_background_layer_tl,
+    background~layer .initial:n = {picturebackground},
+    rotate .fp_set:N = \l_tikzcard_rotate_fp,
+    rotate .initial:n = {0},
+    glow .bool_set:N = \l_tikzcard_glow_bool,
+    glow .initial:n = false,
+    glow .default:n = true,
+    glow~colour .tl_set:N = \l_tikzcard_glow_colour_tl,
+    glow~colour .initial:n = {BackgroundColour},
+    glow~background .tl_set:N = \l_tikzcard_glow_background_tl,
+    glow~background .initial:n = {white},
+    glow~opacity .fp_set:N = \l_tikzcard_glow_opacity_fp,
+    glow~opacity .initial:n = {1},
+    glow~offset .tl_set:N = \l_tikzcard_glow_offset_tl,
+    glow~offset .initial:n = {2mm, -2mm},
+    glow~radius .dim_set:N = \l_tikzcard_glow_radius_dim,
+    glow~radius .initial:n = {0.5cm},
+    glow~scale .fp_set:N = \l_tikzcard_glow_scale_fp,
+    glow~scale .initial:n = {1},
+    glow~grow .dim_set:N = \l_tikzcard_glow_grow_dim,
+    glow~grow .initial:n = {0pt},
+    glow~layer .tl_set:N = \l_tikzcard_glow_layer_tl,
+    glow~layer .initial:n = {pictureshadow},
+}
+
+\tikzfading[
+    name=fade~out,
+    inner~color=transparent!0,
+    outer~color=transparent!100
+]
+
+\bool_new:N \l_tikzcard_glow_transparent_bool
+\bool_set_false:N \l_tikzcard_glow_transparent_bool
+
+\newcommand{\tikzcard}[1][]{
+    \group_begin:
+    \keys_set:nn {tikzcard} {#1}
+    % if padding is not -1pt, then set padding x and y to padding
+    \dim_compare:nNnTF {\l_tikzcard_padding_dim} = {-1pt} {
+        % do nothing
+    }{
+        \dim_set_eq:NN \l_tikzcard_padding_x_dim \l_tikzcard_padding_dim
+        \dim_set_eq:NN \l_tikzcard_padding_y_dim \l_tikzcard_padding_dim
+    }
+    % if glow is true and glow background is the exact string "transparent", then set \l_tikzcard_glow_transparent_bool to true
+    \bool_if:NTF \l_tikzcard_glow_bool {
+        \str_if_eq:VnTF \l_tikzcard_glow_background_tl {transparent} {
+            \bool_set_true:N \l_tikzcard_glow_transparent_bool
+        }{
+            \bool_set_false:N \l_tikzcard_glow_transparent_bool
+        }
+    }{}
+    \begin{scope}[reset~cm, rotate~around = {\fp_to_decimal:n \l_tikzcard_rotate_fp\c_colon_str (\l_tikzcard_node_tl.center)}]
+        \begin{pgfonlayer}{\l_tikzcard_background_layer_tl}
+            \coordinate (bottomleft) at ($$(\l_tikzcard_node_tl.south~west) + (-\l_tikzcard_padding_x_dim, -\l_tikzcard_padding_y_dim)$$);
+            \coordinate (topright) at ($$(\l_tikzcard_node_tl.north~east) + (\l_tikzcard_padding_x_dim, \l_tikzcard_padding_y_dim)$$);
+            \coordinate (bottomright) at ($$(\l_tikzcard_node_tl.south~east) + (\l_tikzcard_padding_x_dim, -\l_tikzcard_padding_y_dim)$$);
+            \coordinate (topleft) at ($$(\l_tikzcard_node_tl.north~west) + (-\l_tikzcard_padding_x_dim, \l_tikzcard_padding_y_dim)$$);
+            % \exp_args:NNV\def\borderstyle\l_tikzcard_border_style_tl
+            \fill[\l_tikzcard_colour_tl, rounded~corners = \l_tikzcard_rounded_corners_dim] 
+            (bottomleft) 
+            rectangle 
+            (topright);
+            % \draw[green]
+            %     (bottomleft)
+            %     rectangle
+            %     (topright);
+            % if border style is not empty, then draw a border
+            % \tl_if_empty:NF \l_tikzcard_border_style_tl {
+            %     \draw[\tl_to_str:n\l_tikzcard_border_style_tl, rounded~corners = \l_tikzcard_rounded_corners_dim] 
+            %     (bottomleft) 
+            %     rectangle 
+            %     (topright);
+            %     }
+            % if glow, add the glow
+            \bool_if:NTF \l_tikzcard_glow_bool {
+                \begin{scope}[overlay]
+                    % \coordinate (bottomleftglow) at ($$(bottomleft) + (\l_tikzcard_glow_offset_tl)$$);
+                    % \coordinate (toprightglow) at ($$(topright) + (\l_tikzcard_glow_offset_tl)$$);
+                    % \coordinate (bottomrightglow) at ($$(bottomright) + (\l_tikzcard_glow_offset_tl)$$);
+                    % \coordinate (topleftglow) at ($$(topleft) + (\l_tikzcard_glow_offset_tl)$$);
+                    \coordinate (bottomleftglow) at ($$(\l_tikzcard_node_tl.center)!\fp_to_decimal:n\l_tikzcard_glow_scale_fp !(bottomleft) + (\l_tikzcard_glow_offset_tl) + ({-1*\l_tikzcard_glow_grow_dim}, {-1*\l_tikzcard_glow_grow_dim})$$);
+                    \coordinate (toprightglow) at ($$(\l_tikzcard_node_tl.center)!\fp_to_decimal:n\l_tikzcard_glow_scale_fp !(topright) + (\l_tikzcard_glow_offset_tl) + ({\l_tikzcard_glow_grow_dim}, {\l_tikzcard_glow_grow_dim})$$);
+                    \coordinate (bottomrightglow) at ($$(\l_tikzcard_node_tl.center)!\fp_to_decimal:n\l_tikzcard_glow_scale_fp !(bottomright) + (\l_tikzcard_glow_offset_tl) + ({\l_tikzcard_glow_grow_dim}, {-1*\l_tikzcard_glow_grow_dim})$$);
+                    \coordinate (topleftglow) at ($$(\l_tikzcard_node_tl.center)!\fp_to_decimal:n\l_tikzcard_glow_scale_fp !(topleft) + (\l_tikzcard_glow_offset_tl) + ({-1*\l_tikzcard_glow_grow_dim}, {\l_tikzcard_glow_grow_dim})$$);
+                    % \fill[red] (bottomleftglow) circle (1pt);
+                    % \fill[red] (toprightglow) circle (1pt);
+                    % \fill[red] (bottomrightglow) circle (1pt);
+                    % \fill[red] (topleftglow) circle (1pt);
+                    % \fill[green] (bottomleft) circle (1pt);
+                    % \fill[green] (topright) circle (1pt);
+                    % \fill[green] (bottomright) circle (1pt);
+                    % \fill[green] (topleft) circle (1pt);
+                    \begin{pgfonlayer}{\l_tikzcard_glow_layer_tl}
+                        \begin{scope}[opacity = \fp_to_decimal:n \l_tikzcard_glow_opacity_fp]
+                            \bool_if:NTF \l_tikzcard_glow_transparent_bool {
+                                \begin{scope}
+                                    % Corners ---------------------------------------------------------------------------------------------------
+                                    \clip (bottomleftglow) rectangle ++ (-1*\l_tikzcard_glow_radius_dim, -1*\l_tikzcard_glow_radius_dim);
+                                    \path[
+                                        path~fading = fade~out,
+                                        fill = \l_tikzcard_glow_colour_tl,
+                                    ]
+                                        (bottomleftglow) 
+                                        circle 
+                                        (\l_tikzcard_glow_radius_dim);
+                                \end{scope}
+                                \begin{scope}
+                                    \clip (toprightglow) rectangle ++ (\l_tikzcard_glow_radius_dim, \l_tikzcard_glow_radius_dim);
+                                    \path[
+                                        path~fading = fade~out,
+                                        fill = \l_tikzcard_glow_colour_tl,
+                                    ]
+                                        (toprightglow)
+                                        circle 
+                                        (\l_tikzcard_glow_radius_dim);
+                                \end{scope}
+                                \begin{scope}
+                                    \clip (bottomrightglow) rectangle ++ (\l_tikzcard_glow_radius_dim, -1*\l_tikzcard_glow_radius_dim);
+                                    \path[
+                                        path~fading = fade~out,
+                                        fill = \l_tikzcard_glow_colour_tl,
+                                    ]
+                                        (bottomrightglow)
+                                        circle 
+                                        (\l_tikzcard_glow_radius_dim);
+                                \end{scope}
+                                \begin{scope}
+                                    \clip (topleftglow) rectangle ++ (-1*\l_tikzcard_glow_radius_dim, \l_tikzcard_glow_radius_dim);
+                                    \path[
+                                        path~fading = fade~out,
+                                        fill = \l_tikzcard_glow_colour_tl,
+                                    ]
+                                        (topleftglow)
+                                        circle 
+                                        (\l_tikzcard_glow_radius_dim);
+                                \end{scope}
+                            }{
+                                \begin{scope}
+                                    % Corners ---------------------------------------------------------------------------------------------------
+                                    \clip (bottomleftglow) rectangle ++ (-1*\l_tikzcard_glow_radius_dim, -1*\l_tikzcard_glow_radius_dim);
+                                    \shade[
+                                        inner~color = \l_tikzcard_glow_colour_tl,
+                                        outer~color = \l_tikzcard_glow_background_tl,
+                                    ]
+                                        (bottomleftglow) 
+                                        circle 
+                                        (\l_tikzcard_glow_radius_dim);
+                                \end{scope}
+                                \begin{scope}
+                                    \clip (toprightglow) rectangle ++ (\l_tikzcard_glow_radius_dim, \l_tikzcard_glow_radius_dim);
+                                    \shade[
+                                        inner~color = \l_tikzcard_glow_colour_tl,
+                                        outer~color = \l_tikzcard_glow_background_tl,
+                                        ]
+                                        (toprightglow)
+                                        circle 
+                                        (\l_tikzcard_glow_radius_dim);
+                                \end{scope}
+                                \begin{scope}
+                                    \clip (bottomrightglow) rectangle ++ (\l_tikzcard_glow_radius_dim, -1*\l_tikzcard_glow_radius_dim);
+                                    \shade[
+                                        inner~color = \l_tikzcard_glow_colour_tl,
+                                        outer~color = \l_tikzcard_glow_background_tl,
+                                    ]
+                                        (bottomrightglow)
+                                        circle 
+                                        (\l_tikzcard_glow_radius_dim);
+                                \end{scope}
+                                \begin{scope}
+                                    \clip (topleftglow) rectangle ++ (-1*\l_tikzcard_glow_radius_dim, \l_tikzcard_glow_radius_dim);
+                                    \shade[
+                                        inner~color = \l_tikzcard_glow_colour_tl,
+                                        outer~color = \l_tikzcard_glow_background_tl,
+                                    ]
+                                        (topleftglow)
+                                        circle 
+                                        (\l_tikzcard_glow_radius_dim);
+                                \end{scope}
+                            }
+                            % Sides ---------------------------------------------------------------------------------------------------------
+                            \bool_if:NTF \l_tikzcard_glow_transparent_bool {
+                                % bottom
+                                \path[
+                                    fill = \l_tikzcard_glow_colour_tl,
+                                    path~fading = south,
+                                ]
+                                    ($$(bottomleftglow) + (-0.2pt, 0)$$) 
+                                    rectangle 
+                                    ($$(bottomrightglow) + (0.2pt, -1*\l_tikzcard_glow_radius_dim)$$);
+                                % right
+                                \path[
+                                    fill = \l_tikzcard_glow_colour_tl,
+                                    path~fading = east,
+                                ]
+                                    ($$(bottomrightglow) + (0, -0.2pt)$$)
+                                    rectangle 
+                                    ($$(toprightglow) + (\l_tikzcard_glow_radius_dim, 0.2pt)$$);
+                                % top
+                                \path[
+                                    fill = \l_tikzcard_glow_colour_tl,
+                                    path~fading = north,
+                                ]
+                                    ($$(toprightglow) + (0.2pt, 0)$$)
+                                    rectangle 
+                                    ($$(topleftglow)+ (-0.2pt, \l_tikzcard_glow_radius_dim)$$);
+                                % left
+                                \path[
+                                    fill = \l_tikzcard_glow_colour_tl,
+                                    path~fading = west,
+                                ]
+                                    ($$(topleftglow) + (0, 0.2pt)$$)
+                                    rectangle 
+                                    ($$(bottomleftglow)+ (-1*\l_tikzcard_glow_radius_dim, -0.2pt)$$);
+                            }{
+                                % bottom
+                                \shade[
+                                    top~color = \l_tikzcard_glow_colour_tl,
+                                    bottom~color = \l_tikzcard_glow_background_tl,
+                                ]
+                                    ($$(bottomleftglow) + (-0.2pt, 0)$$) 
+                                    rectangle 
+                                    ($$(bottomrightglow) + (0.2pt, -1*\l_tikzcard_glow_radius_dim)$$);
+                                % right
+                                \shade[
+                                    left~color = \l_tikzcard_glow_colour_tl,
+                                    right~color = \l_tikzcard_glow_background_tl,
+                                ]
+                                    ($$(bottomrightglow) + (0, -0.2pt)$$)
+                                    rectangle 
+                                    ($$(toprightglow) + (\l_tikzcard_glow_radius_dim, 0.2pt)$$);
+                                % top
+                                \shade[
+                                    bottom~color = \l_tikzcard_glow_colour_tl,
+                                    top~color = \l_tikzcard_glow_background_tl,
+                                ]
+                                    ($$(toprightglow) + (0.2pt, 0)$$)
+                                    rectangle 
+                                    ($$(topleftglow)+ (-0.2pt, \l_tikzcard_glow_radius_dim)$$);
+                                % left
+                                \shade[
+                                    right~color = \l_tikzcard_glow_colour_tl,
+                                    left~color = \l_tikzcard_glow_background_tl,
+                                ]
+                                    ($$(topleftglow) + (0, 0.2pt)$$)
+                                    rectangle 
+                                    ($$(bottomleftglow)+ (-1*\l_tikzcard_glow_radius_dim, -0.2pt)$$);
+                            }
+                            \begin{scope}
+                                % \clip (bottomleftglow) rectangle (toprightglow);
+                                \fill[
+                                    \l_tikzcard_glow_colour_tl, 
+                                    draw = \l_tikzcard_glow_colour_tl, 
+                                    line~width = 0pt
+                                ]   % Add a tiny overlap to avoid white lines due to pdf rendering
+                                    ($$(topleftglow) + (-1sp, 1sp)$$)
+                                    rectangle 
+                                    ($$(bottomrightglow) + (1sp, -1sp)$$);
+                            \end{scope}
+                        \end{scope}
+                    \end{pgfonlayer}
+                % % exclude the shadow from the bounding box
+                % \pgfresetboundingbox
+                % \path[use~as~bounding~box] (bottomleft) rectangle (topright);
+                \end{scope}
+            }{
+                % do nothing
+            }
+        \end{pgfonlayer}
+        \useasboundingbox (bottomleft) rectangle (topright);
+    \end{scope}
+    \group_end:
+}
+
+
+
+\newcommand{\tikzcardset}[1]{
+    \keys_set:nn {tikzcard} {#1}
+}
+
+\ExplSyntaxOff

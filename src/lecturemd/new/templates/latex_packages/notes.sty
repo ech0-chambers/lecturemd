@@ -1,0 +1,230 @@
+\newif\ifslides
+\slidesfalse
+\newif\ifnotes
+\notestrue
+
+${ latex_packages/common.sty() }
+$-- (For syntax highlighting)
+
+\AtBeginDocument{
+    \noteslikebackgrounds
+}
+
+\newlecturebox{name = example,       base color = Green,   title prefix = Example, numbered}
+\newlecturebox{name = aside,        base color = Magenta, title prefix = Aside}
+
+
+\def\examplesolution{\tcblower\setcounter{examplesolutionpartcounter}{0}}%
+\def\examplesolutionpart{\stepcounter{examplesolutionpartcounter}\tcbsubtitle{Part~\textbf{(\alph{examplesolutionpartcounter})}}}%
+\def\examplesolutionsubpart{\stepcounter{examplesolutionsubpartcounter}\tcbsubtitle{Part~\textbf{(\alph{examplesolutionpartcounter}, \roman{examplesolutionsubpartcounter})}}}%
+
+\def\@subtitle{}
+
+\newcommand{\subtitle}[1]{%
+    \def\@subtitle{#1}%
+}
+
+
+\RequirePackage{tikzpagenodes}
+
+\RequirePackage{lastpage}
+\RequirePackage{float}
+
+
+% Page Setup ------------------------------------------------------------------------------------
+\RequirePackage[margin = 0.7in, top = 1in, bottom = 1in, headheight = 0.25in]{geometry}
+
+\RequirePackage{setspace}
+\onehalfspacing
+
+\RequirePackage{indentfirst}
+
+% #region titles
+\RequirePackage{titlesec}
+
+\def\titlelineindent{0.5cm}
+\titleformat
+   {\section}
+   {\normalfont\color{Accent1}\LARGE}
+   {}
+   {0pt}
+   {\tikzmarknode{title}}
+   [
+        {
+            \tikz[
+                overlay, 
+                remember picture
+            ]{
+                \coordinate (rule start) at ($$(title.south west) + (0, -0.5em)$$); 
+                \draw[Accent1, thick, shorten > = \titlelineindent, shorten < = \titlelineindent] (rule start) -- (current page text area.east |- rule start);
+            }
+        }
+        \vspace{-0.5em}
+        \vspace{-2\parskip} % Returns us to normal spacing
+    ]
+
+\titleformat
+    {\subsection}
+    {\normalfont\color{Accent1}\Large}
+    {}
+    {0pt}
+    {\tikzmarknode{title}}
+    [
+         {
+             \tikz[
+                 overlay, 
+                 remember picture
+             ]{
+                 \coordinate (rule start) at ($$(title.south west) + (0, -0.5em)$$); 
+                 \draw[Accent1, shorten < = \titlelineindent] (rule start) -- (current page text area.center |- rule start);
+             }
+         }
+         \vspace{-0.5em}
+         \vspace{-2\parskip}
+     ]
+
+\titleformat
+    {\subsubsection}
+    {\normalfont\color{ForegroundColour}\large}
+    {}
+    {0pt}
+    {\tikzmarknode{title}}
+    [
+         {
+             \tikz[
+                 overlay, 
+                 remember picture
+             ]{
+                 \coordinate (rule start) at ($$(title.south west) + (0, -0.5em)$$); 
+                 \draw[ForegroundColour, shorten < = \titlelineindent, shorten > = \titlelineindent] (rule start) -- (title.east |- rule start);
+             }
+         }
+         \vspace{-0.5em}
+         \vspace{-2\parskip}
+     ]
+
+% #endregion titles
+
+% #region headers and footers
+\newif\ifheaders
+\headerstrue % Set \headersfalse to disable headers and footers
+
+\newcommand{\hideheaders}{\headersfalse}
+
+\RequirePackage{fancyhdr}
+\newlength\logoheight
+\setlength\logoheight{0.5cm}
+
+\AtBeginDocument{
+\let\documenttitle\@title
+}
+
+\fancyhead{} % clear all header fields
+\fancyfoot{} % clear all footer fields
+\fancyhead[l]{\color{ForegroundColour_2}\Large\scshape \documenttitle}
+\fancyhead[r]{%
+    \scshape\color{ForegroundColour_2}\@subtitle%
+}
+$if(footer-logo)$
+\fancyfoot[l]{\includegraphics[height=\logoheight]{$footer-logo$}$if(author)$\raisebox{\logoheight}{\raisebox{-\height}{\color{ForegroundColour_2}\scshape \ $author$}}$endif$}
+$endif$
+$if(institution)$
+    \fancyfoot[r]{\raisebox{\logoheight}{\raisebox{-\height}{\color{ForegroundColour_2}\scshape $institution$}}}
+$endif$
+\fancyfoot[c]{\raisebox{\logoheight}{\raisebox{-\height}{\color{ForegroundColour_2}\scshape Page~\thepage~of~\pageref{LastPage}}}}
+\renewcommand{\footrulewidth}{\headrulewidth}
+\addtolength{\textheight}{-2em}
+\setlength{\footskip}{\logoheight}
+\addtolength{\footskip}{2em}
+\renewcommand{\headrule}{\vspace{-8pt}\color{ForegroundColour_3}\hrulefill}
+\renewcommand{\footrule}{\vspace{-8pt}\color{ForegroundColour_3}\hrulefill}
+
+\fancypagestyle{footeronly}{
+    \fancyhead{} % clear all header fields
+    \fancyfoot{} % clear all footer fields
+$if(footer-logo)$
+    \fancyfoot[l]{\includegraphics[height=\logoheight]{$footer-logo$}$if(author)$\raisebox{\logoheight}{\raisebox{-\height}{\color{ForegroundColour_2}\scshape \ $author$}}$endif$}
+$endif$
+$if(institution)$
+    \fancyfoot[r]{\raisebox{\logoheight}{\raisebox{-\height}{\color{ForegroundColour_2}\scshape $institution$}}}
+$endif$
+    \fancyfoot[c]{\raisebox{\logoheight}{\raisebox{-\height}{\color{ForegroundColour_2}\scshape Page~\thepage~of~\pageref{LastPage}}}}
+    \renewcommand{\footrulewidth}{\headrulewidth}
+    \renewcommand{\headrule}{}
+    \addtolength{\textheight}{-2em}
+    \setlength{\footskip}{\logoheight}
+    \addtolength{\footskip}{2em}
+    \renewcommand{\footrule}{\vspace{-8pt}\color{ForegroundColour_3}\hrulefill}
+}
+
+% #endregion headers and footers
+
+
+
+\renewcommand*{\maketitle}{%
+\begin{center}
+    {\Huge \@title}\par
+    {\noindent{}\tikzmarknode[inner sep = 0pt]{subtitle}{\Large \scshape \@subtitle}}\par
+    {%
+        \Large\begin{tikzpicture}[overlay, remember picture]
+            \coordinate (base right) at ($$(subtitle.base east) + (0.5ex, 0.55ex)$$);
+            \coordinate (base left)  at ($$(subtitle.base west) + (-0.5ex, 0.55ex)$$);
+            \draw[ForegroundColour_3] (base right) -- (base right-|current page text area.east);
+            \draw[ForegroundColour_3] (base left)  -- (base left-|current page text area.west);
+        \end{tikzpicture}
+$if(main-logo)$
+        \par
+        \includegraphics[width = 0.5\textwidth]{$main-logo$}
+$endif$
+        \par
+        \Large\@author
+        \par
+        \clearpage
+    }
+
+\end{center}
+}
+
+
+% The following is executed *AFTER* anything in \AtBeginDocument, which is required so that hyperref can properly set up before we try and use it. etoolbox documentation, page 4.
+\AfterEndPreamble{
+    \ifheaders
+    \pagestyle{fancy}
+    \thispagestyle{footeronly}
+    \else
+    \fi
+    \maketitle
+    \clearpage
+    \tableofcontents
+}
+
+\AddToHook{cmd/section/before}{\clearpage}
+
+\DeclareCaptionFormat{custom}
+{%
+    \color{Blue}\textbf{#1#2} \color{ForegroundColour}#3\normalcolor%
+}
+\captionsetup{format=custom, width = 0.9\textwidth}
+
+\newenvironment{subquestions}{
+    \begin{enumerate}[label = \semibold{(\alph*)}]
+}{
+    \end{enumerate}
+}
+\newenvironment{subsubquestions}{
+    \begin{enumerate}[label = \semibold{(\roman*)}]
+}{
+    \end{enumerate}
+}
+
+\usepackage{hyperref}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=Blue,
+    filecolor=Red,
+    urlcolor=Green,
+    citecolor=Blue,
+    pdftitle={\@pdftitle},
+    pdfauthor={\@author},
+}

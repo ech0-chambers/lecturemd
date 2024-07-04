@@ -1,0 +1,291 @@
+\newcommand{\highlight}[2]{
+    \path[opacity = 0.25, rounded corners, fill = #2] ($$(#1.north east) + (0.075, 0.075)$$) rectangle ($$(#1.south west) - (0.075, 0.075)$$);
+}
+
+\ExplSyntaxOn
+
+\seq_new:N \g_anchors_seq
+\seq_set_split:Nnn \g_anchors_seq {,} {east, north~east, north, north~west, west, south~west, south, south~east}
+
+\newcommand{\angletoanchor}[1]{
+    \fp_zero_new:N \l_angle_fp
+    \fp_set:Nn \l_angle_fp {#1}
+    \fp_set:Nn \l_angle_fp {round(\l_angle_fp / 45) + 1} % +1 because the sequences are 1-indexed
+    \tl_set:Nx \l_anchor_tl {\seq_item:Nn \g_anchors_seq {\fp_to_int:N \l_angle_fp}}
+    \tl_use:N \l_anchor_tl
+}
+
+
+\cs_new:Npn \label_math:nnnnnnnn #1#2#3#4#5#6#7#8 {
+    % #1 - color
+    % #2 - offset
+    % #3 - label
+    % #4 - node
+    % #5 - node anchor
+    % #6 - label anchor
+    % #7 - in angle
+    % #8 - out angle
+    \begin{tikzpicture}[remember~picture,overlay]
+    \highlight{#4}{#1}
+    \node[anchor = #6, #1] (text) at ($$(#4.#5) + (#2)$$) {#3};
+    \draw[annotation, #1] (text.#6) to[in = \fp_to_decimal:n #7, out = \fp_to_decimal:n #8] ($$(#4.#5) + (\fp_to_decimal:n {0.1* cosd(#7)}, \fp_to_decimal:n {0.1 * sind(#7)})$$);
+    \end{tikzpicture}
+}
+
+\cs_new:Npn \label_node:nnnnnnnn #1#2#3#4#5#6#7#8 {
+    % #1 - color
+    % #2 - offset
+    % #3 - label
+    % #4 - node
+    % #5 - node anchor
+    % #6 - label anchor
+    % #7 - in angle
+    % #8 - out angle
+    \begin{pgfonlayer}{foreground}
+    \node[anchor = #6, annotation~label, text = #1] (text) at ($$(#4.#5) + (#2)$$) {#3};
+    \draw[annotation,  #1] (text.#6) to[in = \fp_to_decimal:n #7, out = \fp_to_decimal:n #8] ($$(#4.#5) + (\fp_to_decimal:n {0.1* cosd(#7)}, \fp_to_decimal:n {0.1 * sind(#7)})$$);
+    \end{pgfonlayer}
+}
+
+
+\newcommand{\labelmath}[3][1,-1]{
+    % #1 - offset. No processing needed
+    % #2 - defines the node, anchor, and label. (  .*   ) \s* (\. \s* (      .*      ))? \s* -> \s* (  .*  ) \s* \. \s* (     .*      )
+    %                                           (<label>)     ( .     (<label anchor>))?     ->     (<node>)      .     (<node anchor>)
+    %      e.g., $$=1$$ for $$x > 0$$.north -> I.south
+    %            $$\approx 0$$->B.north east
+    % #3 - color. No processing needed
+
+    \regex_extract_once:nnN {(.*?)\s*(\.\s*(.*?))?\s*->\s*(.*)\s*\.\s*(.*)} {#2} {\l_tmpa_seq}
+    % discard first item, it's the full match
+    \seq_pop_left:NN \l_tmpa_seq \l_tmpa_tl
+
+    \tl_clear_new:N \l_label_tl
+    \tl_clear_new:N \l_node_tl
+
+    \str_clear_new:N \l_node_anchor_str
+    \str_clear_new:N \l_label_anchor_str
+
+    \seq_pop_left:NN \l_tmpa_seq \l_label_tl
+    \seq_pop_right:NN \l_tmpa_seq \l_tmpa_tl
+    \str_set:Nx \l_node_anchor_str {\tl_to_str:N \l_tmpa_tl}
+    \seq_pop_right:NN \l_tmpa_seq \l_node_tl
+
+    % always matches all groups, but the remaining groups might be empty. Check by popping from the right
+    \seq_pop_right:NN \l_tmpa_seq \l_tmpa_tl
+    % if it's empty:
+    \tl_if_empty:NTF \l_tmpa_tl {
+        \seq_set_split:Nnn \l_tmpb_seq {,} {#1}
+        \fp_set:Nn \l_tmpa_fp {\seq_item:Nn \l_tmpb_seq {1}}
+        \fp_set:Nn \l_tmpb_fp {\seq_item:Nn \l_tmpb_seq {2}}
+        \str_set:Nx \l_label_anchor_str {
+            \fp_to_decimal:n {atand(\l_tmpb_fp / \l_tmpa_fp) + 180}
+        }
+    }{
+        \str_set:Nx \l_label_anchor_str {\tl_to_str:N \l_tmpa_tl}
+    }
+
+    \fp_zero_new:N \l_in_angle_fp
+    \fp_zero_new:N \l_out_angle_fp
+
+    \str_case:VnTF \l_node_anchor_str {
+        {south}{
+            \fp_set:Nn \l_in_angle_fp {270}
+        }
+        {north}{
+            \fp_set:Nn \l_in_angle_fp {90}
+        }
+        {east}{
+            \fp_set:Nn \l_in_angle_fp {0}
+        }
+        {west}{
+            \fp_set:Nn \l_in_angle_fp {180}
+        }
+        {south~east}{
+            \fp_set:Nn \l_in_angle_fp {315}
+        }
+        {south~west}{
+            \fp_set:Nn \l_in_angle_fp {225}
+        }
+        {north~east}{
+            \fp_set:Nn \l_in_angle_fp {45}
+        }
+        {north~west}{
+            \fp_set:Nn \l_in_angle_fp {135}
+        }
+    }{
+        % we found a match, do nothing
+    }{
+        % didn't find a match, just draw a line
+        \fp_set:Nn \l_in_angle_fp {\l_label_anchor_str}
+    }
+
+    \str_case:VnTF \l_label_anchor_str {
+        {south}{
+            \fp_set:Nn \l_out_angle_fp {270}
+        }
+        {north}{
+            \fp_set:Nn \l_out_angle_fp {90}
+        }
+        {east}{
+            \fp_set:Nn \l_out_angle_fp {0}
+        }
+        {west}{
+            \fp_set:Nn \l_out_angle_fp {180}
+        }
+        {south~east}{
+            \fp_set:Nn \l_out_angle_fp {315}
+        }
+        {south~west}{
+            \fp_set:Nn \l_out_angle_fp {225}
+        }
+        {north~east}{
+            \fp_set:Nn \l_out_angle_fp {45}
+        }
+        {north~west}{
+            \fp_set:Nn \l_out_angle_fp {135}
+        }
+    }{
+        % we found a match, do nothing
+    }{
+        % didn't find a match, anchor should be a number, which will also be our angle
+        \fp_set:Nn \l_out_angle_fp {\l_label_anchor_str}
+    }
+
+    \label_math:nnnnnnnn {#3}{#1}{\l_label_tl}{\l_node_tl}{\l_node_anchor_str}{\l_label_anchor_str}{\l_in_angle_fp}{\l_out_angle_fp}
+
+}
+
+
+\newcommand{\labelnode}[3][1,-1]{
+    % #1 - offset. No processing needed
+    % #2 - defines the node, anchor, and label. (  .*   ) \s* (\. \s* (      .*      ))? \s* -> \s* (  .*  ) \s* \. \s* (     .*      )
+    %                                           (<label>)     ( .     (<label anchor>))?     ->     (<node>)      .     (<node anchor>)
+    %      e.g., $$=1$$ for $$x > 0$$.north -> I.south
+    %            $$\approx 0$$->B.north east
+    % #3 - color. No processing needed
+
+    \regex_extract_once:nnN {(.*?)\s*(\.\s*(.*?))?\s*->\s*(.*)\s*\.\s*(.*)} {#2} {\l_tmpa_seq}
+    % discard first item, it's the full match
+    \seq_pop_left:NN \l_tmpa_seq \l_tmpa_tl
+
+    \tl_clear_new:N \l_label_tl
+    \tl_clear_new:N \l_node_tl
+
+    \str_clear_new:N \l_node_anchor_str
+    \str_clear_new:N \l_label_anchor_str
+
+    \seq_pop_left:NN \l_tmpa_seq \l_label_tl
+    \seq_pop_right:NN \l_tmpa_seq \l_tmpa_tl
+    \str_set:Nx \l_node_anchor_str {\tl_to_str:N \l_tmpa_tl}
+    \seq_pop_right:NN \l_tmpa_seq \l_node_tl
+
+    % always matches all groups, but the remaining groups might be empty. Check by popping from the right
+    \seq_pop_right:NN \l_tmpa_seq \l_tmpa_tl
+    % if it's empty:
+    \tl_if_empty:NTF \l_tmpa_tl {
+        \seq_set_split:Nnn \l_tmpb_seq {,} {#1}
+        \fp_set:Nn \l_tmpa_fp {\seq_item:Nn \l_tmpb_seq {1}}
+        \fp_set:Nn \l_tmpb_fp {\seq_item:Nn \l_tmpb_seq {2}}
+        \str_set:Nx \l_label_anchor_str {
+            \fp_to_decimal:n {atand(\l_tmpb_fp / \l_tmpa_fp) + 180}
+        }
+    }{
+        \str_set:Nx \l_label_anchor_str {\tl_to_str:N \l_tmpa_tl}
+    }
+
+    \fp_zero_new:N \l_in_angle_fp
+    \fp_zero_new:N \l_out_angle_fp
+
+
+
+    \str_case:VnTF \l_node_anchor_str {
+        {south}{
+            \fp_set:Nn \l_in_angle_fp {270}
+        }
+        {north}{
+            \fp_set:Nn \l_in_angle_fp {90}
+        }
+        {east}{
+            \fp_set:Nn \l_in_angle_fp {0}
+        }
+        {west}{
+            \fp_set:Nn \l_in_angle_fp {180}
+        }
+        {south~east}{
+            \fp_set:Nn \l_in_angle_fp {315}
+        }
+        {south~west}{
+            \fp_set:Nn \l_in_angle_fp {225}
+        }
+        {north~east}{
+            \fp_set:Nn \l_in_angle_fp {45}
+        }
+        {north~west}{
+            \fp_set:Nn \l_in_angle_fp {135}
+        }
+    }{
+        % we found a match, do nothing
+    }{
+        % didn't find a match, just draw a line
+        \fp_set:Nn \l_in_angle_fp {\l_label_anchor_str}
+    }
+
+    \str_case:VnTF \l_label_anchor_str {
+        {south}{
+            \fp_set:Nn \l_out_angle_fp {270}
+        }
+        {north}{
+            \fp_set:Nn \l_out_angle_fp {90}
+        }
+        {east}{
+            \fp_set:Nn \l_out_angle_fp {0}
+        }
+        {west}{
+            \fp_set:Nn \l_out_angle_fp {180}
+        }
+        {south~east}{
+            \fp_set:Nn \l_out_angle_fp {315}
+        }
+        {south~west}{
+            \fp_set:Nn \l_out_angle_fp {225}
+        }
+        {north~east}{
+            \fp_set:Nn \l_out_angle_fp {45}
+        }
+        {north~west}{
+            \fp_set:Nn \l_out_angle_fp {135}
+        }
+    }{
+        % we found a match, do nothing
+    }{
+        % didn't find a match, anchor should be a number, which will also be our angle
+        \fp_set:Nn \l_out_angle_fp {\l_label_anchor_str}
+    }
+
+    \label_node:nnnnnnnn {#3}{#1}{\l_label_tl}{\l_node_tl}{\l_node_anchor_str}{\l_label_anchor_str}{\l_in_angle_fp}{\l_out_angle_fp}
+
+}
+
+
+
+
+\ExplSyntaxOff
+
+\tikzset{
+    annotation/.style = {
+        thick, 
+        ->,
+        Magenta,
+    },
+    % annotation label/.style = {
+    %     text = Magenta,
+    %     align = center,
+    %     fill = BackgroundColour,
+    %     opacity = 0.75,
+    %     text opacity = 1,
+    % }
+    annotation label/.style = {
+        label node
+    }
+}

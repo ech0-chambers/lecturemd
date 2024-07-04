@@ -1,0 +1,82 @@
+\documentclass{article}
+
+\def\tightlist{} % Added by pandoc to lists. Why???
+
+% \usepackage{preamble/latex_packages/notes}
+
+\makeatletter
+${ latex_packages/notes.sty() }
+$-- (For syntax highlighting)
+\makeatother
+
+\usepackage{siunitx}
+
+\input{styles/colour_scheme.tex}
+
+\newcommand{\note}[1]{\textit{\semibold{\color{Red}Note:\ }\color{ForegroundColour}#1\normalcolor}}
+\newcommand{\hint}[1]{\textit{\semibold{\color{Blue}Hint:\ }\color{ForegroundColour}#1\normalcolor}}
+
+\usepackage{enumitem}
+\usepackage{mathabx}
+% set the itemize symbol 
+\setlist[itemize, 1]{label=\textcolor{Accent2}{\ensuremath{\bullet}}}
+\setlist[itemize, 2]{label=\textcolor{Accent2_3}{\ensuremath{\blacktriangleright}}}
+\setlist[itemize, 3]{label=\textcolor{Accent2_4}{\ensuremath{\sqbullet}}}
+
+\newcommand{\includegraphicscard}[3][]{%
+    \begin{tikzpicture}
+        \node (graphic) {\includegraphics[#1]{#2}};
+        \tikzcard[node = graphic, #3]
+    \end{tikzpicture}
+}
+
+$for(header-includes)$
+$header-includes$
+$endfor$
+$if(title)$
+\title{$title$}
+$endif$
+
+\author{$for(author)$$author$$sep$ \and $endfor$}
+\date{$date$}
+
+$if(subtitle)$
+\subtitle{$subtitle$}
+$endif$
+
+
+\begin{document}
+$if(has-frontmatter)$
+\frontmatter
+$endif$
+$if(abstract)$
+\begin{abstract}
+$abstract$
+\end{abstract}
+$endif$
+
+$for(include-before)$
+$include-before$
+$endfor$
+
+$if(lof)$
+\listoffigures
+$endif$
+$if(lot)$
+\listoftables
+$endif$
+$if(has-frontmatter)$
+\mainmatter
+$endif$
+$body$
+
+$if(has-frontmatter)$
+\backmatter
+$endif$
+
+
+$for(include-after)$
+$include-after$
+
+$endfor$
+\end{document}

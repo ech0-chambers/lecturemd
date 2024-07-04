@@ -1,0 +1,366 @@
+:root {
+    font-size: 1.2rem;
+    font-family: 'Fira Sans', sans-serif;
+    font-weight: 300;
+    --tcolorbox-border-width: 2px;
+    --tcolorbox-border-radius: 0.5em;
+    --tcolorbox-title-separator: 2ch;
+    --tcolorbox-inner-padding: 1em;
+}
+
+
+
+body {
+    max-width: 30cm;
+    margin: auto;
+    counter-reset: exmapleCounter;
+    margin-block-end: 5cm;
+    padding-inline: 3em;
+}
+
+p {
+    line-height: 1.675rem;
+    text-indent: 1cm;
+    text-align: justify;
+    margin-block: 1.75rem;
+}
+
+a {
+    color: var(--clr-blue);
+    text-decoration: none;
+}
+
+li {
+    margin-block: 1rem;
+}
+
+.display > mjx-container {
+    width: 90%;
+    margin-inline: auto !important;
+}
+
+h1.title {
+    font-size: 3rem;
+    font-weight: 200;
+    text-align: center;
+    margin-block-end: 0em;
+    color: var(--clr-foreground);
+}
+
+p.subtitle{
+    font-size: 1.5rem;
+    font-weight: 200;
+    text-align: center;
+    margin-block-start: 0.5em;
+    color: var(--clr-foreground);
+    text-indent: 0;
+}
+
+p.author {
+    font-size: 1.2rem;
+    font-weight: 200;
+    text-align: center;
+    color: var(--clr-foreground);
+    text-indent: 0;
+}
+
+p.date {
+    font-size: 1.2rem;
+    font-weight: 200;
+    text-align: center;
+    color: var(--clr-foreground);
+    text-indent: 0;
+}
+
+span.math {
+    color: var(--clr-foreground);
+    font-size: 0.9em;
+}
+
+h1, h2, h3, h4 {
+    color: var(--clr-blue);
+}
+
+h1 .math, h2 .math, h3 .math, h4 .math {
+    color: var(--clr-blue);
+}
+
+h1 {
+    font-size: 2rem;
+    font-weight: 200;
+    margin-bottom: 1.5rem;
+}
+
+h2 {
+    font-size: 1.5rem;
+    font-weight: 200;
+    margin-bottom: 1.5rem;
+}
+
+h1::after{
+    content: "";
+    display: block;
+    height: 0;
+    border-bottom: 2px solid var(--clr-blue);
+    margin-left: 1cm;
+    margin-top: 0.25em;
+}
+
+h2::after {
+    content: "";
+    display: block;
+    height: 0;
+    border-bottom: 1px solid var(--clr-blue);
+    width: calc(50% - 1cm);
+    margin-left: 1cm;
+    margin-top: 0.25em;
+}
+
+h3 {
+    font-size: 1.35rem;
+    font-weight: 200;
+    margin-bottom: 1.5rem;
+}
+
+h3::after {
+    content: "";
+    display: block;
+    height: 0;
+    width: calc(25% - 1cm);
+    border-bottom: 1px solid var(--clr-blue);
+    margin-left: 1cm;
+    margin-top: 0.25em;
+}
+
+div.note > p,
+span.note {
+    font-style: italic;
+    color: var(--clr-foreground);
+}
+
+div.note > p::before,
+span.note::before {
+    content: "Note: ";
+    font-weight: 400;
+    font-style: italic;
+    color: var(--clr-red);
+    display: inline;
+}
+
+.tcolorbox.example {
+    --tcolorbox-main-color: var(--clr-green);
+}
+
+.tcolorbox.definition {
+    --tcolorbox-main-color: var(--clr-blue);
+}
+
+.tcolorbox.aside {
+    --tcolorbox-main-color: var(--clr-magenta);
+}
+
+.tcolorbox {
+    border-width: var(--tcolorbox-border-width);
+    border-style: solid;
+    border-color: var(--tcolorbox-main-color);
+    border-radius: var(--tcolorbox-border-radius);
+    padding-block-start: 0;
+    box-sizing: border-box;
+    background: var(--clr-background);
+    color: var(--clr-foreground);
+    padding-inline: var(--tcolorbox-inner-padding);
+    margin-block: 2em;
+}
+
+.tcolorbox > div.title {
+    background-color: var(--tcolorbox-main-color);
+    color: var(--clr-background);
+    font-weight: 600;
+    width: calc(100% + 2 * var(--tcolorbox-border-width) + 2 * var(--tcolorbox-inner-padding));
+    margin-left: calc(-1*var(--tcolorbox-border-width) - var(--tcolorbox-inner-padding));
+    margin-top: calc(-1*var(--tcolorbox-border-width));
+    border-top-left-radius: var(--tcolorbox-border-radius);
+    border-top-right-radius: var(--tcolorbox-border-radius);
+}
+
+.tcolorbox > div.title > p {
+    margin-block-start: 0;
+    padding-block: 0.25em;
+    text-indent: 0;
+}
+
+.tcolorbox > div.title > p::before {
+    content: "";
+    font-weight: 600;
+    color: var(--clr-background);
+    padding-right: var(--tcolorbox-title-separator);
+    margin-left: 1.25em;
+}
+
+.tcolorbox.example > div.title > p::before {
+    counter-increment: exmapleCounter;
+    content: "Example " counter(exmapleCounter) ": ";
+}
+
+.tcolorbox.definition > div.title > p::before {
+    content: "Definition: ";
+}
+
+.tcolorbox.aside > div.title > p::before {
+    content: "Aside: ";
+}
+
+.latex-macro.emphasis{
+    font-style: italic;
+    font-weight: 400;
+    color: var(--clr-magenta);
+}
+
+span.subfigure-name,
+span.figure-name {
+    font-weight: 600;
+    color: var(--clr-blue);
+}
+
+span.subfigure-name{
+    margin-right: 1ch;
+}
+
+figcaption{
+    text-align: center;
+    color: var(--clr-foreground);
+    width: 90%;
+    margin: auto;
+}
+
+figure {
+    display: flex;
+    flex-direction: column;
+}
+
+figure > img {
+    margin: auto;
+    background-color: var(--clr-background);
+    border-radius: 0.5em;
+    box-shadow: 5px 5px 15px 10px var(--clr-background-5);
+    margin-bottom: 1em;
+    padding: 1ch;
+}
+
+figure.figure-rows {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+
+li {
+    list-style-type: square;
+}
+
+li::marker {
+    color: var(--clr-accent2);
+    font-size: 1.5em;
+}
+
+li li {
+    padding-left: 1ch;
+}
+
+:not(li) > ul > li > ul > li::marker {
+    color: var(--clr-accent2-3);
+    content: "▶";
+    font-size: 0.8rem;
+}
+
+li li li {
+    list-style-type: disc;
+}
+
+li li li::marker {
+    color: var(--clr-accent2-4);
+}
+li li li li::marker {
+    color: var(--clr-accent2-5);
+}
+
+
+nav#TOC {
+    border-radius: 0.5em;
+    border: 2px solid var(--clr-blue);
+    padding: 1em;
+    background-color: var(--clr-background);
+}
+
+ @media only screen and (max-width: 600px) {
+    :root {
+        font-size: 1rem;
+    }
+
+    p {
+        line-height: 1.5rem;
+        text-align: left;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    h1.title {
+        font-size: 2rem;
+    }
+
+    h2 {
+        font-size: 1.25rem;
+    }
+
+    h3, h4 {
+        font-size: 1.2rem;
+    }
+}
+
+header#header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 1em;
+    padding-inline: 1in;
+    background-color: var(--clr-background);
+    color: var(--clr-foreground);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    font-variant: small-caps;
+}
+
+footer#footer-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1em;
+    padding-inline: 1in;
+    background-color: var(--clr-background);
+    color: var(--clr-foreground-2);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    font-variant: small-caps;
+}
+
+footer#footer-bar img {
+    height: 1.5em;
+    padding-right: 1em;
+}
+
+footer#footer-bar span.spacer {
+    flex-grow: 1;
+}
+
+header img.main-logo {
+    width: 30%;
+    margin-left: 50%;
+    transform: translateX(-50%);
+}
