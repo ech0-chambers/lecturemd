@@ -252,6 +252,13 @@ def document_settings():
             keys=["general", "date"],
             tooltip="Set to 'today' to automatically insert the current date at compile time.",
         )
+        yield input_field(
+            "Institution",
+            "Your Institution",
+            id="institution",
+            keys=["general", "institution"],
+            tooltip="The institution to be displayed in the footer.",
+        )
         panel = Vertical(classes="panel")
         panel.border_title = "Logo"
         with panel:
