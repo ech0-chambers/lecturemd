@@ -26,7 +26,7 @@ base_settings = {
         "filters": ["$lecturemd/latex_environments.py"],
         "notes": {
             "preamble": ["preamble/latex_notes.tex"],
-            "filters": [{"$lecturemd/delistify.py": -10}],
+            "filters": [{"$lecturemd/delistify.py": -10}, {"$lecturemd/derule.py": -9}],
         },
         "slides": {"preamble": ["preamble/latex_slides.tex"], "filters": []},
     },
@@ -37,7 +37,7 @@ base_settings = {
         "styles": [],
         "notes": {
             "preamble": ["preamble/html_notes.html"],
-            "filters": [{"$lecturemd/delistify.py": -10}],
+            "filters": [{"$lecturemd/delistify.py": -10}, {"$lecturemd/derule.py": -9}],
             "styles": ["styles/notes.css"],
         },
         "slides": {
