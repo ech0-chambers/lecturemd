@@ -13,7 +13,7 @@ from textual.widgets import (
     Switch,
     Button,
 )
-from textual.containers import Vertical, Horizontal, Grid, VerticalScroll, Container
+from textual.containers import Vertical, Horizontal, Grid, VerticalScroll, Container, Center
 
 from typing import Callable, List, Tuple
 from pathlib import Path
@@ -839,26 +839,27 @@ class ConfigurationApp(App):
     def compose(self) -> ComposeResult:
         """Compose app with tabbed content."""
         # Footer to show keys
-        yield Footer()
+        with Center():
+            yield Footer()
 
-        # Add the TabbedContent widget
-        with TabbedContent(initial="general"):
-            with TabPane("General", id="general"):
-                with VerticalScroll():
-                    for widget in general_settings():
-                        yield widget
-            with TabPane("LaTeX (pdf)", id="latex"):
-                with VerticalScroll():
-                    for widget in latex_settings():
-                        yield widget
-            with TabPane("HTML (web)", id="html"):
-                with VerticalScroll():
-                    for widget in html_settings():
-                        yield widget
+            # Add the TabbedContent widget
+            with TabbedContent(initial="general"):
+                with TabPane("General", id="general"):
+                    with VerticalScroll():
+                        for widget in general_settings():
+                            yield widget
+                with TabPane("LaTeX (pdf)", id="latex"):
+                    with VerticalScroll():
+                        for widget in latex_settings():
+                            yield widget
+                with TabPane("HTML (web)", id="html"):
+                    with VerticalScroll():
+                        for widget in html_settings():
+                            yield widget
 
-        with Horizontal(classes="buttons"):
-            yield Button("Discard and Exit", id="discard_and_exit", classes="warning")
-            yield Button("Save and Exit", id="save_and_exit", classes="save")
+            with Horizontal(classes="buttons"):
+                yield Button("Discard and Exit", id="discard_and_exit", classes="warning")
+                yield Button("Save and Exit", id="save_and_exit", classes="save")
 
     def on_input_changed(self, message):
         id = message.input.id

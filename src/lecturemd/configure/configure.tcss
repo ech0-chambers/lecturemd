@@ -1,8 +1,12 @@
+
+
 Screen {
     background: $clr-background;
     color: $clr-foreground;
+    content-align: center top;
+    align: center middle;
     & * {
-        max-width: 132;
+        max-width: 100;
     }
 }
 

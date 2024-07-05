@@ -258,6 +258,14 @@ def gather_filters(filters_list: List) -> List:
     return [resolve_filter_path(f[0]) for f in filters]
 
 
+def write_crossref() -> None:
+    crossref_file = base_dir/".lecturemd"/"defaults"/"crossref.yaml"
+    if not crossref_file.parent.exists():
+        crossref_file.parent.mkdir(parents=True)
+    with open(crossref_file, "w+") as f:
+        f.write(crossref_metadata)
+    return crossref_file
+
 def build_pdf_notes(base_dir: Path, build_dir: Path, settings: dict, logos: dict) -> None:
     if settings["general"]["subtitle"] is not None:
         tex_file = build_dir/(sanitize_filename(settings["general"]["subtitle"]) + "_notes.tex")
@@ -295,9 +303,7 @@ def build_pdf_notes(base_dir: Path, build_dir: Path, settings: dict, logos: dict
 
     pandoc_settings["filters"] = gather_filters(settings["general"]["filters"] + settings["latex"]["filters"] + settings["latex"]["notes"]["filters"])
 
-    crossref_file = base_dir/".lecturemd"/"defaults"/"crossref.yaml"
-    with open(crossref_file, "w+") as f:
-        f.write(crossref_metadata)
+    crossref_file = write_crossref()
 
     pandoc_settings["metadata-files"] = [str(crossref_file)]
 
@@ -349,9 +355,7 @@ def build_pdf_slides(base_dir: Path, build_dir: Path, settings: dict, logos: dic
         "incremental": True,
     }
 
-    crossref_file = base_dir/".lecturemd"/"defaults"/"crossref.yaml"
-    with open(crossref_file, "w+") as f:
-        f.write(crossref_metadata)
+    crossref_file = write_crossref()
 
     pandoc_settings["metadata-files"] = [str(crossref_file)]
 
@@ -429,9 +433,7 @@ def build_web_notes(base_dir: Path, build_dir: Path, settings: dict, logos: dict
         "css": settings["html"]["styles"] + settings["html"]["notes"]["styles"],
     }
 
-    crossref_file = base_dir/".lecturemd"/"defaults"/"crossref.yaml"
-    with open(crossref_file, "w+") as f:
-        f.write(crossref_metadata)
+    crossref_file = write_crossref()
 
     pandoc_settings["metadata-files"] = [str(crossref_file)]
 
@@ -514,9 +516,7 @@ def build_web_slides(base_dir: Path, build_dir: Path, settings: dict, logos: dic
         "css": settings["html"]["styles"] + settings["html"]["slides"]["styles"],
     }
 
-    crossref_file = base_dir/".lecturemd"/"defaults"/"crossref.yaml"
-    with open(crossref_file, "w+") as f:
-        f.write(crossref_metadata)
+    crossref_file = write_crossref()
 
     pandoc_settings["metadata-files"] = [str(crossref_file)]
 
@@ -603,9 +603,7 @@ def build_web_chunked(base_dir: Path, build_dir: Path, settings: dict, logos: di
         "css": settings["html"]["styles"] + settings["html"]["notes"]["styles"],
     }
 
-    crossref_file = base_dir/".lecturemd"/"defaults"/"crossref.yaml"
-    with open(crossref_file, "w+") as f:
-        f.write(crossref_metadata)
+    crossref_file = write_crossref()
 
     pandoc_settings["metadata-files"] = [str(crossref_file)]
 
