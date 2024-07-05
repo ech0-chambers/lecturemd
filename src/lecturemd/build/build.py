@@ -23,7 +23,7 @@ eqnPrefix:
   - "equation"
   - "equations"
 eqnPrefixTemplate: '$$p$$&nbsp;($$i$$)'
-equationNumberTeX: '\\tag'
+equationNumberTeX: '\\\\tag'
 eqnIndexTemplate: '$$i$$'
 
 linkReferences: true
@@ -57,11 +57,13 @@ replacements = {
         ],
         "slides": [
             # If an \item is a display equation, remove the bullet point
-            (r"\\item\s*(?=(\\begin{equation}|\\\[))", r"\\item[]"),
+            (r"\\item\s*(?=(\\begin{equation}|\{?\\\[))", r"\\item[]"),
             # Remove the automatically added frametitles
-            (r"\\begin{frame}{(.*?)}", r"\\begin{frame}"),
+            (r"\\begin{frame}((\[.*?\])?){(.*?)}", r"\\begin{frame}\1"),
             # add a \pause to the start of each frame
-            (r"\\begin{frame}((\[.\])?)", r"\\begin{frame}\1\n\t\\pause"),
+            (r"\\begin{frame}((\[.*?\])?)", r"\\begin{frame}\1\n\t\\pause"),
+            # Remove `fragile` frame options
+            (r"\\begin{frame}\[fragile\]", r"\\begin{frame}"),
         ]
     },
     "html": {
@@ -389,10 +391,12 @@ def build_pdf_slides(base_dir: Path, build_dir: Path, settings: dict, logos: dic
 
     run_latexmk(tex_file)
 
-    # remove .nav and .snm files
+    # remove .nav, .snm, .vrb files
     for file in build_dir.glob("*.nav"):
         file.unlink()
     for file in build_dir.glob("*.snm"):
+        file.unlink()
+    for file in build_dir.glob("*.vrb"):
         file.unlink()
 
 def build_web_notes(base_dir: Path, build_dir: Path, settings: dict, logos: dict) -> None:
