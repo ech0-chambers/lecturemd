@@ -1,4 +1,4 @@
-from .build import main, parse_args
+from .make import main, parse_args
 
 if __name__ == "__main__":
     args = parse_args()

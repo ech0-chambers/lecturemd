@@ -2,7 +2,7 @@ import argparse
 from pathlib import Path
 from .new import main as new_main
 from .configure import main as configure_main
-from .build import main as build_main
+from .make import main as build_main
 import os
 
 def parse_args():
@@ -62,9 +62,7 @@ def build(args):
     build_main(Path(".").resolve(), args.format, args.output)
 
 
-
-
-if __name__ == "__main__":
+def main():
     args = parse_args()
     if args.subcommand == "new":
         new(args)
@@ -72,3 +70,7 @@ if __name__ == "__main__":
         configure(args)
     elif args.subcommand == "build":
         build(args)
+
+
+if __name__ == "__main__":
+    main()

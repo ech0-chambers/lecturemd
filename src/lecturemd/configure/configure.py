@@ -508,10 +508,11 @@ def styles_panel(
                 yield Button("+", id=f"{id_prefix}-styles-add-button", classes="add")
 
 
-with open(Path(__file__).parent / "schemes.txt", "r") as f:
-    schemes = f.read().split("\n")
-schemes = [s for s in schemes if s]
-
+# with open(Path(__file__).parent / "schemes.txt", "r") as f:
+#     schemes = f.read().split("\n")
+# schemes = [s for s in schemes if s]
+from pygmentation import list_schemes, get_available_schemes
+schemes = list_schemes(True, '^[^(slide)].*', get_available_schemes(), False)
 
 def colour_scheme_picker():
     return select_field(
