@@ -14,6 +14,7 @@ import time
 
 from rich.progress import Progress, TimeElapsedColumn, TextColumn, BarColumn
 
+
 def format_elapsed_time(t_ns: float):
     # time is in nanoseconds, format in an appropriate unit to 3 significant figures (NOT 3 decimal places)
     timestring = None
@@ -907,9 +908,24 @@ def build_web_chunked(
         with open(file, "w+") as f:
             f.write(content)
 
-def end_progress_task(task: int, progress: Progress):
-    progress.start_task(task)
-    progress.update(task, total = 1, completed = 1, visible = False)
+
+class TimedBuild:
+    def __init__(self, progress: Progress, target: str):
+        self.progress = progress
+        self.target = target
+
+    def __enter__(self):
+        self.task_id = self.progress.add_task(f"Building {self.target}", total=None)
+        self.start_time = time.perf_counter_ns()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.end_time = time.perf_counter_ns()
+        self.progress.start_task(self.task_id)
+        self.progress.update(self.task_id, total=1, completed=1, visible=False)
+        self.progress.console.print(
+            f"Built {self.target} in {format_elapsed_time(self.end_time - self.start_time)}"
+        )
 
 
 def main(
@@ -936,46 +952,27 @@ def main(
     ) as progress:
         if output in ["pdf", "all"]:
             if format is None or format == "notes":
-                task = progress.add_task("Building PDF notes", total=None)
-                start_time = time.perf_counter_ns()
-                build_pdf_notes(base_dir, build_dir, settings, logos)
-                end_time = time.perf_counter_ns()
-                end_progress_task(task, progress)
-                progress.console.print(f"Built PDF notes in {format_elapsed_time(end_time - start_time)}")
+                with TimedBuild(progress, "PDF notes"):
+                    build_pdf_notes(base_dir, build_dir, settings, logos)
             if format is None or format == "slides":
-                task = progress.add_task("Building PDF slides", total=None)
-                start_time = time.perf_counter_ns()
-                build_pdf_slides(base_dir, build_dir, settings, logos)
-                end_time = time.perf_counter_ns()
-                end_progress_task(task, progress)
-                progress.console.print(f"Built PDF slides in {format_elapsed_time(end_time - start_time)}")
+                with TimedBuild(progress, "PDF slides"):
+                    build_pdf_slides(base_dir, build_dir, settings, logos)
         if output in ["web", "all"]:
             if format is None or format == "notes":
-                task = progress.add_task("Building web notes", total=None)
-                start_time = time.perf_counter_ns()
-                build_web_notes(base_dir, build_dir, settings, logos)
-                end_time = time.perf_counter_ns()
-                end_progress_task(task, progress)
-                progress.console.print(f"Built web notes in {format_elapsed_time(end_time - start_time)}")
+                with TimedBuild(progress, "Web notes"):
+                    build_web_notes(base_dir, build_dir, settings, logos)
             if format is None or format == "slides":
-                task = progress.add_task("Building web slides", total=None)
-                start_time = time.perf_counter_ns()
-                build_web_slides(base_dir, build_dir, settings, logos)
-                end_time = time.perf_counter_ns()
-                end_progress_task(task, progress)
-                progress.console.print(f"Built web slides in {format_elapsed_time(end_time - start_time)}")
+                with TimedBuild(progress, "Web slides"):
+                    build_web_slides(base_dir, build_dir, settings, logos)
             if format is None or format == "chunked":
-                task = progress.add_task("Building web chunked", total=None)
-                start_time = time.perf_counter_ns()
-                build_web_chunked(base_dir, build_dir, settings, logos)
-                end_time = time.perf_counter_ns()
-                end_progress_task(task, progress)
-                progress.console.print(f"Built web chunked in {format_elapsed_time(end_time - start_time)}")
+                with TimedBuild(progress, "Web chunked notes"):
+                    build_web_chunked(base_dir, build_dir, settings, logos)
     # remove any log files we generated. filter.log, pyndoc.*.log
     for file in base_dir.glob("filter.log"):
         file.unlink()
     for file in base_dir.glob("pyndoc.*.log"):
         file.unlink()
+
 
 if __name__ == "__main__":
     args = parse_args()
