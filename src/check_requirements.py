@@ -6,12 +6,14 @@ from enum import Enum
 import platform
 from importlib.util import find_spec
 
+
 class Platform(Enum):
     LINUX = 0
     WINDOWS = 1
     MAC = 2
     JAVA = 3
     UNKNOWN = 4
+
 
 def get_platform() -> Platform:
     system = platform.system()
@@ -26,12 +28,17 @@ def get_platform() -> Platform:
     else:
         return Platform.UNKNOWN
 
+
 operating_system = get_platform()
 if operating_system == Platform.UNKNOWN:
-    raise Exception("Unsupported or unknown operating system. Cannot check requirements.")
+    raise Exception(
+        "Unsupported or unknown operating system. Cannot check requirements."
+    )
+
 
 def is_installed(program: str) -> bool:
     return shutil.which(program) is not None
+
 
 def is_package_installed(package: str) -> bool:
     return find_spec(package) is not None
@@ -84,7 +91,11 @@ requirements = [
     },
     {
         "program": "imagemagick",
-        "installed": is_installed("convert") if operating_system in [Platform.LINUX, Platform.MAC] else is_installed("magick"),
+        "installed": (
+            is_installed("convert")
+            if operating_system in [Platform.LINUX, Platform.MAC]
+            else is_installed("magick")
+        ),
         "fail_message": "imagemagick is not installed\n\tPlease install it from [link=https://imagemagick.org/script/download.php]https://imagemagick.org/script/download[/link]",
     },
     {
@@ -122,7 +133,7 @@ requirements = [
         "is_python": True,
         "installed": is_package_installed("pint"),
         "fail_message": "pint is not installed\n\tPlease install it by running `pip install pint`.",
-    }
+    },
 ]
 
 

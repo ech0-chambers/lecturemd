@@ -16,7 +16,11 @@ base_settings = {
         "use pyndoc": True,
         "preamble": [],
         "maths preamble": ["preamble/maths.tex"],
-        "filters": ["$lecturemd/notesslides.py", "$lecturemd/format_filter.py", {"$lecturemd/pandoc-crossref": 10}],
+        "filters": [
+            "$lecturemd/notesslides.py",
+            "$lecturemd/format_filter.py",
+            {"$lecturemd/pandoc-crossref": 10},
+        ],
         "main file": "main.md",
         "logo": {"main logo": None, "footer logo": None},
     },
@@ -166,20 +170,24 @@ def create_directory_structure(root_dir, directory_structure):
 def copy_templates(templates_dir):
     templates_src = Path(__file__).parent / "templates"
     if not templates_src.exists():
-        raise FileNotFoundError(f"Templates directory \"{templates_src}\" does not exist")
+        raise FileNotFoundError(f'Templates directory "{templates_src}" does not exist')
     if not templates_src.is_dir():
-        raise FileNotFoundError(f"Templates directory \"{templates_src}\" is not a directory")
+        raise FileNotFoundError(
+            f'Templates directory "{templates_src}" is not a directory'
+        )
     # copy the entire directory
     shutil.copytree(templates_src, templates_dir, dirs_exist_ok=True)
+
 
 def copy_styles(styles_dir):
     styles_src = Path(__file__).parent / "styles"
     if not styles_src.exists():
-        raise FileNotFoundError(f"Styles directory \"{styles_src}\" does not exist")
+        raise FileNotFoundError(f'Styles directory "{styles_src}" does not exist')
     if not styles_src.is_dir():
-        raise FileNotFoundError(f"Styles directory \"{styles_src}\" is not a directory")
+        raise FileNotFoundError(f'Styles directory "{styles_src}" is not a directory')
     # copy the entire directory
     shutil.copytree(styles_src, styles_dir, dirs_exist_ok=True)
+
 
 def main(target_dir: Path, interactive: bool = False, overwrite: bool = False):
     if target_dir.exists():
@@ -187,25 +195,39 @@ def main(target_dir: Path, interactive: bool = False, overwrite: bool = False):
             shutil.rmtree(target_dir)
         else:
             if interactive:
-                if Confirm.ask(f"Directory \"{target_dir}\" already exists. Overwrite?"):
+                if Confirm.ask(f'Directory "{target_dir}" already exists. Overwrite?'):
                     shutil.rmtree(target_dir)
                 else:
                     rprint("Aborting")
                     return
             else:
-                raise FileExistsError(f"Directory \"{target_dir}\" already exists")
+                raise FileExistsError(f'Directory "{target_dir}" already exists')
     target_dir.mkdir()
     create_directory_structure(target_dir, directory_structure)
     copy_templates(target_dir / ".lecturemd" / "templates")
     copy_styles(target_dir / "styles")
 
+
 def parse_args():
     # python3 -m lecturemd.create [--non-interactive|-I] [--overwrite|-o] target_dir
     parser = argparse.ArgumentParser()
-    parser.add_argument("target_dir", type=Path, help="The directory to create the lecture in")
-    parser.add_argument("--non-interactive", "-I", action="store_true", help="Do not ask for confirmation,and exit if the target directory already exists")
-    parser.add_argument("--overwrite", "-o", action="store_true", help="Overwrite the target directory if it already exists, without asking for confirmation") 
+    parser.add_argument(
+        "target_dir", type=Path, help="The directory to create the lecture in"
+    )
+    parser.add_argument(
+        "--non-interactive",
+        "-I",
+        action="store_true",
+        help="Do not ask for confirmation,and exit if the target directory already exists",
+    )
+    parser.add_argument(
+        "--overwrite",
+        "-o",
+        action="store_true",
+        help="Overwrite the target directory if it already exists, without asking for confirmation",
+    )
     return parser.parse_args()
+
 
 if __name__ == "__main__":
     args = parse_args()
