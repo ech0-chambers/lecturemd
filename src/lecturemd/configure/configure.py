@@ -13,7 +13,14 @@ from textual.widgets import (
     Switch,
     Button,
 )
-from textual.containers import Vertical, Horizontal, Grid, VerticalScroll, Container, Center
+from textual.containers import (
+    Vertical,
+    Horizontal,
+    Grid,
+    VerticalScroll,
+    Container,
+    Center,
+)
 
 from typing import Callable, List, Tuple
 from pathlib import Path
@@ -29,11 +36,13 @@ base_dir = Path(".").resolve()
 def read_settings(base_dir: Path) -> dict:
     settings_path = base_dir / ".lecturemd/lecturemd.yaml"
     if not settings_path.exists():
-        raise FileNotFoundError(f"""Settings file not found! 
+        raise FileNotFoundError(
+            f"""Settings file not found! 
 Make sure you run this from the root of your lecturemd project.
 I am looking for the settings file at .lecturemd/lecturemd.yaml.
 I am running from here: {base_dir}
-The full path to the settings file would be: {settings_path}""")
+The full path to the settings file would be: {settings_path}"""
+        )
     if not settings_path.is_file():
         raise FileNotFoundError("Settings file is not a file")
     with open(settings_path, "r") as f:
@@ -74,11 +83,15 @@ def write_settings(base_dir: Path, settings: dict):
     settings_path = base_dir / ".lecturemd/lecturemd.yaml"
     # settings_path = base_dir / "lecturemd.yaml"
     if not settings_path.exists():
-        raise FileNotFoundError("""Settings file not found! 
+        raise FileNotFoundError(
+            """Settings file not found! 
 Make sure you run this from the root of your lecturemd project.
-I am looking for the settings file at .lecturemd/lecturemd.yaml.""")
+I am looking for the settings file at .lecturemd/lecturemd.yaml."""
+        )
     if not settings_path.is_file():
-        raise FileNotFoundError("Settings file \".lecturemd/lecturemd.yaml\" is not a file.")
+        raise FileNotFoundError(
+            'Settings file ".lecturemd/lecturemd.yaml" is not a file.'
+        )
     with open(settings_path, "w") as f:
         yaml.dump(settings, f)
 
@@ -221,6 +234,8 @@ def general_settings():
         yield widget
     for widget in general_preambles():
         yield widget
+    for widget in maths_preamble():
+        yield widget
 
 
 def document_settings():
@@ -291,6 +306,8 @@ def filters_panel(
     id_prefix: str,
     title: str,
     previous_filters: List[Tuple[str | dict[str, int], str]] | None = None,
+    description: str | None = None,
+    panel_title: str | None = None,
 ):
     all_filters = [
         (
@@ -318,7 +335,12 @@ def filters_panel(
     order_help_text = """Filters are applied starting with the lowest order number (which can be negative). If two filters have the same order, they are applied alphabetically by file name."""
     file_help_text = """The file to apply as a pandoc filter. This file must be executable (using `chmod +x` on linux). Filters which start with '$lecturemd' will be searched for in the lecturemd installation directory. All others are treated as a relative path."""
 
-    with Collapsible(title="Filters", id=f"{id_prefix}-filters", collapsed=False):
+    if panel_title is None:
+        panel_title = "Filters"
+
+    with Collapsible(title=panel_title, id=f"{id_prefix}-filters", collapsed=True):
+        if description is not None:
+            yield Markdown(description)
         with Vertical(id=f"{id_prefix}-filters-grid", classes="filters-grid"):
             with Horizontal(classes="header"):
                 file_label = Label("File", classes="file tooltip")
@@ -331,7 +353,7 @@ def filters_panel(
             if len(all_filters) == 0:
                 yield Label(
                     f"There are currently no filters applied to the {title} output.",
-                    id = f"{id_prefix}-filters-none", 
+                    id=f"{id_prefix}-filters-none",
                 )
             else:
                 for filter in all_filters:
@@ -378,9 +400,30 @@ def filters_panel(
                 yield Button("+", id=f"{id_prefix}-filters-add-button", classes="add")
 
 
+def maths_preamble():
+    preambles = settings["general"]["maths preamble"]
+    description = """These preambles are applied to all output formats. For HTML (web) formats, these are encased in math mode for MathJax. For LaTeX (pdf) formats these are applied directly."""
+    title = "Maths Preambles"
+    for widget in preambles_panel(
+        preambles,
+        "general-maths",
+        "general maths",
+        None,
+        description=description,
+        panel_title=title,
+    ):
+        yield widget
+
+
 def general_preambles():
     preambles = settings["general"]["preamble"]
-    for widget in preambles_panel(preambles, "general", "general", None):
+    previous_preambles = settings["general"]["maths preamble"]
+    previous_preambles = [
+        (preamble, "general-maths") for preamble in previous_preambles
+    ]
+    for widget in preambles_panel(
+        preambles, "general", "general", previous_preambles=previous_preambles
+    ):
         yield widget
     return
 
@@ -390,6 +433,8 @@ def preambles_panel(
     id_prefix: str,
     title: str,
     previous_preambles: List[Tuple[str, str]] | None = None,
+    description: str | None = None,
+    panel_title: str | None = None,
 ):
     all_preambles = [(preamble, None) for preamble in preambles]
     if previous_preambles is not None:
@@ -400,7 +445,12 @@ def preambles_panel(
 
     file_help_text = """The file to apply as a preamble. The file contents will be inserted into the headers of all output files."""
 
-    with Collapsible(title="Preambles", id=f"{id_prefix}-preambles", collapsed=False):
+    if panel_title is None:
+        panel_title = "Preambles"
+
+    with Collapsible(title=panel_title, id=f"{id_prefix}-preambles", collapsed=True):
+        if description is not None:
+            yield Markdown(description)
         with Vertical(id=f"{id_prefix}-preambles-grid", classes="preambles-grid"):
             with Horizontal(classes="header"):
                 file_label = Label("File", classes="file tooltip")
@@ -410,7 +460,7 @@ def preambles_panel(
             if len(preambles) == 0:
                 yield Label(
                     f"There are currently no preambles applied to the {title} output.",
-                    id = f"{id_prefix}-preambles-none",
+                    id=f"{id_prefix}-preambles-none",
                 )
             else:
                 for preamble in all_preambles:
@@ -454,6 +504,8 @@ def styles_panel(
     id_prefix: str,
     title: str,
     previous_styles: List[Tuple[str, str]] | None = None,
+    description: str | None = None,
+    panel_title: str | None = None,
 ):
     all_styles = [(style, None) for style in styles]
     if previous_styles is not None:
@@ -462,7 +514,12 @@ def styles_panel(
 
     file_help_text = """The file to apply as a linked stylesheet (css)."""
 
-    with Collapsible(title="Styles", id=f"{id_prefix}-styles", collapsed=False):
+    if panel_title is None:
+        panel_title = "Styles"
+
+    with Collapsible(title=panel_title, id=f"{id_prefix}-styles", collapsed=True):
+        if description is not None:
+            yield Markdown(description)
         with Vertical(id=f"{id_prefix}-styles-grid", classes="styles-grid"):
             with Horizontal(classes="header"):
                 file_label = Label("File", classes="file tooltip")
@@ -470,7 +527,10 @@ def styles_panel(
                 yield file_label
                 yield Label("Remove", classes="remove")
             if len(styles) == 0:
-                yield Label(f"There are currently no styles applied to the {title} output.", id=f"{id_prefix}-styles-none")
+                yield Label(
+                    f"There are currently no styles applied to the {title} output.",
+                    id=f"{id_prefix}-styles-none",
+                )
             else:
                 for style in all_styles:
                     with Horizontal(
@@ -512,7 +572,9 @@ def styles_panel(
 #     schemes = f.read().split("\n")
 # schemes = [s for s in schemes if s]
 from pygmentation import list_schemes, get_available_schemes
-schemes = list_schemes(True, '^[^(slide)].*', get_available_schemes(), False)
+
+schemes = list_schemes(True, "^[^(slide)].*", get_available_schemes(), False)
+
 
 def colour_scheme_picker():
     return select_field(
@@ -566,7 +628,13 @@ def latex_filters():
     filters = settings["latex"]["filters"]
     previous_filters = settings["general"]["filters"]
     previous_filters = [(filter, "general") for filter in previous_filters]
-    for widget in filters_panel(filters, "latex", "LaTeX (pdf)", previous_filters):
+    for widget in filters_panel(
+        filters,
+        "latex",
+        "LaTeX (pdf)",
+        previous_filters,
+        panel_title="LaTeX (pdf) Filters",
+    ):
         yield widget
 
 
@@ -575,7 +643,11 @@ def latex_preambles():
     previous_preambles = settings["general"]["preamble"]
     previous_preambles = [(preamble, "general") for preamble in previous_preambles]
     for widget in preambles_panel(
-        preambles, "latex", "LaTeX (pdf)", previous_preambles
+        preambles,
+        "latex",
+        "LaTeX (pdf)",
+        previous_preambles,
+        panel_title="LaTeX (pdf) Preambles",
     ):
         yield widget
 
@@ -601,7 +673,11 @@ def latex_notes_filters():
     general_filters = [(filter, "general") for filter in general_filters]
     previous_filters = latex_filters + general_filters
     for widget in filters_panel(
-        filters, "latex-notes", "LaTeX (pdf) notes", previous_filters
+        filters,
+        "latex-notes",
+        "LaTeX (pdf) notes",
+        previous_filters,
+        panel_title="LaTeX (pdf) Notes Filters",
     ):
         yield widget
 
@@ -614,7 +690,11 @@ def latex_notes_preambles():
     general_preambles = [(preamble, "general") for preamble in general_preambles]
     previous_preambles = latex_preambles + general_preambles
     for widget in preambles_panel(
-        preambles, "latex-notes", "LaTeX (pdf) notes", previous_preambles
+        preambles,
+        "latex-notes",
+        "LaTeX (pdf) notes",
+        previous_preambles,
+        panel_title="LaTeX (pdf) Notes Preambles",
     ):
         yield widget
 
@@ -640,7 +720,11 @@ def latex_slides_filters():
     general_filters = [(filter, "general") for filter in general_filters]
     previous_filters = latex_filters + general_filters
     for widget in filters_panel(
-        filters, "latex-slides", "LaTeX (pdf) slides", previous_filters
+        filters,
+        "latex-slides",
+        "LaTeX (pdf) slides",
+        previous_filters,
+        panel_title="LaTeX (pdf) Slides Filters",
     ):
         yield widget
 
@@ -653,7 +737,11 @@ def latex_slides_preambles():
     general_preambles = [(preamble, "general") for preamble in general_preambles]
     previous_preambles = latex_preambles + general_preambles
     for widget in preambles_panel(
-        preambles, "latex-slides", "LaTeX (pdf) slides", previous_preambles
+        preambles,
+        "latex-slides",
+        "LaTeX (pdf) slides",
+        previous_preambles,
+        panel_title="LaTeX (pdf) Slides Preambles",
     ):
         yield widget
 
@@ -703,7 +791,9 @@ def html_all_settings():
 
 def html_styles():
     styles = settings["html"]["styles"]
-    for widget in styles_panel(styles, "html", "html (web)", None):
+    for widget in styles_panel(
+        styles, "html", "html (web)", None, panel_title="HTML (web) Styles"
+    ):
         yield widget
 
 
@@ -711,7 +801,13 @@ def html_filters():
     filters = settings["html"]["filters"]
     previous_filters = settings["general"]["filters"]
     previous_filters = [(filter, "general") for filter in previous_filters]
-    for widget in filters_panel(filters, "html", "html (web)", previous_filters):
+    for widget in filters_panel(
+        filters,
+        "html",
+        "html (web)",
+        previous_filters,
+        panel_title="HTML (web) Filters",
+    ):
         yield widget
 
 
@@ -719,7 +815,13 @@ def html_preambles():
     preambles = settings["html"]["preamble"]
     previous_preambles = settings["general"]["preamble"]
     previous_preambles = [(preamble, "general") for preamble in previous_preambles]
-    for widget in preambles_panel(preambles, "html", "html (web)", previous_preambles):
+    for widget in preambles_panel(
+        preambles,
+        "html",
+        "html (web)",
+        previous_preambles,
+        panel_title="HTML (web) Preambles",
+    ):
         yield widget
 
 
@@ -742,7 +844,13 @@ def html_notes_styles():
     styles = settings["html"]["notes"]["styles"]
     html_styles = settings["html"]["styles"]
     html_styles = [(style, "html") for style in html_styles]
-    for widget in styles_panel(styles, "html-notes", "html (web) notes", html_styles):
+    for widget in styles_panel(
+        styles,
+        "html-notes",
+        "html (web) notes",
+        html_styles,
+        panel_title="HTML (web) Notes Styles",
+    ):
         yield widget
 
 
@@ -754,7 +862,11 @@ def html_notes_filters():
     general_filters = [(filter, "general") for filter in general_filters]
     previous_filters = html_filters + general_filters
     for widget in filters_panel(
-        filters, "html-notes", "html (web) notes", previous_filters
+        filters,
+        "html-notes",
+        "html (web) notes",
+        previous_filters,
+        panel_title="HTML (web) Notes Filters",
     ):
         yield widget
 
@@ -767,7 +879,11 @@ def html_notes_preambles():
     general_preambles = [(preamble, "general") for preamble in general_preambles]
     previous_preambles = html_preambles + general_preambles
     for widget in preambles_panel(
-        preambles, "html-notes", "html (web) notes", previous_preambles
+        preambles,
+        "html-notes",
+        "html (web) notes",
+        previous_preambles,
+        panel_title="HTML (web) Notes Preambles",
     ):
         yield widget
 
@@ -791,7 +907,13 @@ def html_slides_styles():
     styles = settings["html"]["slides"]["styles"]
     html_styles = settings["html"]["styles"]
     html_styles = [(style, "html") for style in html_styles]
-    for widget in styles_panel(styles, "html-slides", "html (web) slides", html_styles):
+    for widget in styles_panel(
+        styles,
+        "html-slides",
+        "html (web) slides",
+        html_styles,
+        panel_title="HTML (web) Slides Styles",
+    ):
         yield widget
 
 
@@ -803,7 +925,11 @@ def html_slides_filters():
     general_filters = [(filter, "general") for filter in general_filters]
     previous_filters = html_filters + general_filters
     for widget in filters_panel(
-        filters, "html-slides", "html (web) slides", previous_filters
+        filters,
+        "html-slides",
+        "html (web) slides",
+        previous_filters,
+        panel_title="HTML (web) Slides Filters",
     ):
         yield widget
 
@@ -816,7 +942,11 @@ def html_slides_preambles():
     general_preambles = [(preamble, "general") for preamble in general_preambles]
     previous_preambles = html_preambles + general_preambles
     for widget in preambles_panel(
-        preambles, "html-slides", "html (web) slides", previous_preambles
+        preambles,
+        "html-slides",
+        "html (web) slides",
+        previous_preambles,
+        panel_title="HTML (web) Slides Preambles",
     ):
         yield widget
 
@@ -859,7 +989,9 @@ class ConfigurationApp(App):
                             yield widget
 
             with Horizontal(classes="buttons"):
-                yield Button("Discard and Exit", id="discard_and_exit", classes="warning")
+                yield Button(
+                    "Discard and Exit", id="discard_and_exit", classes="warning"
+                )
                 yield Button("Save and Exit", id="save_and_exit", classes="save")
 
     def on_input_changed(self, message):
@@ -965,9 +1097,9 @@ class ConfigurationApp(App):
                     id=f"{other_prefix}-filter-{to_id_format(filter)}",
                     classes="row",
                 )
-                try: 
+                try:
                     self.query_one(f"#{other_prefix}-filters-none").remove()
-                except: 
+                except:
                     pass
                 self.query_one(f"#{other_prefix}-filters-grid").mount(new_filter_row)
 
@@ -1140,6 +1272,40 @@ class ConfigurationApp(App):
             )
             return
 
+        if id.startswith("remove-general-maths-preamble"):
+            self.handle_remove_preamble(
+                id,
+                "general-maths",
+                ["general", "maths preamble"],
+                also_remove_from=[
+                    "general",
+                    "latex",
+                    "latex-notes",
+                    "latex-slides",
+                    "html",
+                    "html-notes",
+                    "html-slides",
+                ],
+            )
+            return
+
+        if id == "general-maths-preambles-add-button":
+            self.handle_add_preamble(
+                id,
+                "general-maths",
+                ["general", "maths preamble"],
+                also_add_to=[
+                    "general",
+                    "latex",
+                    "latex-notes",
+                    "latex-slides",
+                    "html",
+                    "html-notes",
+                    "html-slides",
+                ],
+            )
+            return
+
         if id.startswith("remove-latex-filter"):
             self.handle_remove_filter(
                 id,
@@ -1215,15 +1381,25 @@ class ConfigurationApp(App):
                 id, "latex-slides", ["latex", "slides", "preamble"]
             )
             return
-        
+
         if id.startswith("remove-html-style"):
-            self.handle_remove_style(id, "html", ["html", "styles"], also_remove_from=["html-notes", "html-slides"])
+            self.handle_remove_style(
+                id,
+                "html",
+                ["html", "styles"],
+                also_remove_from=["html-notes", "html-slides"],
+            )
             return
-        
+
         if id == "html-styles-add-button":
-            self.handle_add_style(id, "html", ["html", "styles"], also_add_to=["html-notes", "html-slides"])
+            self.handle_add_style(
+                id,
+                "html",
+                ["html", "styles"],
+                also_add_to=["html-notes", "html-slides"],
+            )
             return
-        
+
         if id.startswith("remove-html-filter"):
             self.handle_remove_filter(
                 id,
@@ -1232,7 +1408,7 @@ class ConfigurationApp(App):
                 also_remove_from=["html-notes", "html-slides"],
             )
             return
-        
+
         if id == "html-filters-add-button":
             self.handle_add_filter(
                 id,
@@ -1241,7 +1417,7 @@ class ConfigurationApp(App):
                 also_add_to=["html-notes", "html-slides"],
             )
             return
-        
+
         if id.startswith("remove-html-preamble"):
             self.handle_remove_preamble(
                 id,
@@ -1250,7 +1426,7 @@ class ConfigurationApp(App):
                 also_remove_from=["html-notes", "html-slides"],
             )
             return
-        
+
         if id == "html-preambles-add-button":
             self.handle_add_preamble(
                 id,
@@ -1259,64 +1435,56 @@ class ConfigurationApp(App):
                 also_add_to=["html-notes", "html-slides"],
             )
             return
-        
+
         if id.startswith("remove-html-notes-style"):
             self.handle_remove_style(id, "html-notes", ["html", "notes", "styles"])
             return
-        
+
         if id == "html-notes-styles-add-button":
             self.handle_add_style(id, "html-notes", ["html", "notes", "styles"])
             return
-        
+
         if id.startswith("remove-html-notes-filter"):
             self.handle_remove_filter(id, "html-notes", ["html", "notes", "filters"])
             return
-        
+
         if id == "html-notes-filters-add-button":
             self.handle_add_filter(id, "html-notes", ["html", "notes", "filters"])
             return
-        
+
         if id.startswith("remove-html-notes-preamble"):
             self.handle_remove_preamble(id, "html-notes", ["html", "notes", "preamble"])
             return
-        
+
         if id == "html-notes-preambles-add-button":
             self.handle_add_preamble(id, "html-notes", ["html", "notes", "preamble"])
             return
-        
+
         if id.startswith("remove-html-slides-style"):
             self.handle_remove_style(id, "html-slides", ["html", "slides", "styles"])
             return
-        
+
         if id == "html-slides-styles-add-button":
             self.handle_add_style(id, "html-slides", ["html", "slides", "styles"])
             return
-        
+
         if id.startswith("remove-html-slides-filter"):
-            self.handle_remove_filter(
-                id, "html-slides", ["html", "slides", "filters"]
-            )
+            self.handle_remove_filter(id, "html-slides", ["html", "slides", "filters"])
             return
-        
+
         if id == "html-slides-filters-add-button":
-            self.handle_add_filter(
-                id, "html-slides", ["html", "slides", "filters"]
-            )
+            self.handle_add_filter(id, "html-slides", ["html", "slides", "filters"])
             return
-        
+
         if id.startswith("remove-html-slides-preamble"):
             self.handle_remove_preamble(
                 id, "html-slides", ["html", "slides", "preamble"]
             )
             return
-        
-        if id == "html-slides-preambles-add-button":
-            self.handle_add_preamble(
-                id, "html-slides", ["html", "slides", "preamble"]
-            )
-            return
-        
 
+        if id == "html-slides-preambles-add-button":
+            self.handle_add_preamble(id, "html-slides", ["html", "slides", "preamble"])
+            return
 
     @on(Button.Pressed, "#save_and_exit")
     def save_and_exit(self, message):
@@ -1338,6 +1506,7 @@ def main():
     app = ConfigurationApp()
     app.run()
     write_settings(base_dir, settings)
+
 
 if __name__ == "__main__":
     main()

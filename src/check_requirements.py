@@ -4,7 +4,7 @@ from rich.table import Table
 from rich import print as rprint
 from enum import Enum
 import platform
-
+from importlib.util import find_spec
 
 class Platform(Enum):
     LINUX = 0
@@ -32,6 +32,9 @@ if operating_system == Platform.UNKNOWN:
 
 def is_installed(program: str) -> bool:
     return shutil.which(program) is not None
+
+def is_package_installed(package: str) -> bool:
+    return find_spec(package) is not None
 
 
 def red(text: str) -> str:
@@ -84,6 +87,42 @@ requirements = [
         "installed": is_installed("convert") if operating_system in [Platform.LINUX, Platform.MAC] else is_installed("magick"),
         "fail_message": "imagemagick is not installed\n\tPlease install it from [link=https://imagemagick.org/script/download.php]https://imagemagick.org/script/download[/link]",
     },
+    {
+        "program": "pyndoc",
+        "is_python": True,
+        "installed": is_package_installed("pyndoc"),
+        "fail_message": "pyndoc is not installed\n\tPlease install it by following the instructions at [link=https://github.com/ech0-chambers/pyndoc]https://github.com/ech0-chambers/pyndoc[/link].",
+    },
+    {
+        "program": "pygmentation",
+        "is_python": True,
+        "installed": is_package_installed("pygmentation"),
+        "fail_message": "pygmentation is not installed\n\tPlease install it by following the instructions at [link=https://github.com/ech0-chambers/pygmentation]https://github.com/ech0-chambers/pygmentation[/link].",
+    },
+    {
+        "program": "panflute",
+        "is_python": True,
+        "installed": is_package_installed("panflute"),
+        "fail_message": "panflute is not installed\n\tPlease install it by running `pip install panflute`.",
+    },
+    {
+        "program": "pyaml",
+        "is_python": True,
+        "installed": is_package_installed("yaml"),
+        "fail_message": "pyaml is not installed\n\tPlease install it by running `pip install pyaml`.",
+    },
+    {
+        "program": "textual",
+        "is_python": True,
+        "installed": is_package_installed("textual"),
+        "fail_message": "textual is not installed\n\tPlease install it by running `pip install textual`.",
+    },
+    {
+        "program": "pint",
+        "is_python": True,
+        "installed": is_package_installed("pint"),
+        "fail_message": "pint is not installed\n\tPlease install it by running `pip install pint`.",
+    }
 ]
 
 
