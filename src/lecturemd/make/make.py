@@ -1,7 +1,8 @@
 import shutil
 import subprocess
 import argparse
-from typing import List
+import sys
+from typing import List, Optional
 import yaml
 from pathlib import Path
 import pygmentation.pygmentation as pyg
@@ -15,33 +16,39 @@ import time
 from rich.progress import Progress, TimeElapsedColumn, TextColumn, BarColumn
 
 
-def format_elapsed_time(t_ns: float):
-    # time is in nanoseconds, format in an appropriate unit to 3 significant figures (NOT 3 decimal places)
+def format_elapsed_time(t_ns: float) -> str:
+    """Format a time in nanoseconds to a human-readable string.
+
+    Parameters
+    ----------
+    t_ns : float
+        The time in nanoseconds to format.
+
+    Returns
+    -------
+    str
+        The formatted time string.
+    """    
+
     timestring = None
     unit = None
     if t_ns < 1e3:
-        # return f"{t_ns:#.3g} ns"
         timestring = f"{t_ns:#.3g}"
         unit = "ns"
     elif t_ns < 1e6:
-        # return f"{t_ns / 1e3:#.3g} \xb5s"
         timestring = f"{t_ns / 1e3:#.3g}"
         unit = "\xb5s"
     elif t_ns < 1e9:
-        # return f"{t_ns / 1e6:#.3g} ms"
         timestring = f"{t_ns / 1e6:#.3g}"
         unit = "ms"
     elif t_ns < 60e9:
-        # return f"{t_ns / 1e9:#.3g} s"
         timestring = f"{t_ns / 1e9:#.3g}"
         unit = "s"
     elif t_ns < 60e9 * 60:
-        # return as ##m ##s
         m = int(t_ns / 60e9)
         s = int((t_ns - m * 60e9) / 1e9)
         return f"{m}m {s:0>2d}s"
     else:
-        # return as ##h ##m ##s. I really hope we never need this
         h = int(t_ns / 3600e9)
         m = int((t_ns - h * 3600e9) / 60e9)
         s = int((t_ns - h * 3600e9 - m * 60e9) / 1e9)
@@ -61,6 +68,13 @@ class Platform(Enum):
 
 
 def get_platform() -> Platform:
+    """Get the current platform.
+
+    Returns
+    -------
+    Platform
+        The current platform.
+    """    
     system = platform.system()
     if system == "Linux":
         return Platform.LINUX
@@ -82,6 +96,18 @@ if operating_system == Platform.UNKNOWN:
 
 
 def is_installed(program: str) -> bool:
+    """Check if a program is installed and available in the PATH.
+
+    Parameters
+    ----------
+    program : str
+        The name of the program to check.
+
+    Returns
+    -------
+    bool
+        True if the program is installed and available, False otherwise.
+    """    
     return shutil.which(program) is not None
 
 
@@ -181,6 +207,25 @@ def parse_args():
 
 
 def read_settings(base_dir: Path) -> dict:
+    """Read the settings file from `.lecturemd/lecturemd.yaml`.
+
+    Parameters
+    ----------
+    base_dir : Path
+        The base directory of the project.
+
+    Returns
+    -------
+    dict
+        The settings read from the file.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the settings file is not found.
+    FileNotFoundError
+        If the settings file is not a file.
+    """    
     settings_path = base_dir / ".lecturemd/lecturemd.yaml"
     if not settings_path.exists():
         raise FileNotFoundError("Settings file not found")
@@ -194,6 +239,18 @@ def read_settings(base_dir: Path) -> dict:
 
 
 def create_build_dir(build_dir: Path) -> None:
+    """Create the build directory if it does not exist.
+
+    Parameters
+    ----------
+    build_dir : Path
+        The build directory to create.
+
+    Raises
+    ------
+    FileExistsError
+        If the build directory already exists but is not a directory.
+    """    
     if not build_dir.exists():
         build_dir.mkdir()
         return
@@ -204,6 +261,20 @@ def create_build_dir(build_dir: Path) -> None:
 
 
 def copy_figures(base_dir: Path, build_dir: Path) -> None:
+    """Copy the figures directory from the base directory to the build directory.
+
+    Parameters
+    ----------
+    base_dir : Path
+        The base directory of the project.
+    build_dir : Path
+        The build directory into which the figures should be copied.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the figures directory exists but is not a directory.
+    """    
     figures_dir = base_dir / "figures"
     if not figures_dir.exists():
         return
@@ -215,7 +286,30 @@ def copy_figures(base_dir: Path, build_dir: Path) -> None:
     shutil.copytree(figures_dir, target_figures_dir, dirs_exist_ok=True)
 
 
-def convert_file(source: Path, extension: str, dest: Path = None) -> None:
+def convert_file(source: Path, extension: str, dest: Optional[Path] = None) -> Path:
+    """Convert a file to a different format. Usually, this will be converting a .pdf file into a format more suitable for web output.
+
+    Parameters
+    ----------
+    source : Path
+        The source file to convert.
+    extension : str
+        The extension to convert the file to.
+    dest : Optional[Path] = None
+        The destination file to save the converted file to. If not specified, the destination file will be the source file with the new extension.
+
+    Returns
+    -------
+    Path
+        The path to the converted file.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the conversion program is not installed.
+    Exception
+        If the operating system could not be determined.
+    """    
     if not extension.startswith("."):
         extension = "." + extension
     if dest is None:
@@ -253,9 +347,15 @@ def convert_file(source: Path, extension: str, dest: Path = None) -> None:
 
 
 def convert_figures(build_dir: Path, extension: str) -> None:
-    # Convert any pdf files in the figures directory to the specified extension
-    # if svg, use pdf2svg
-    # otherwise, try convert
+    """Convert all .pdf files in the figures directory to a different format.
+
+    Parameters
+    ----------
+    build_dir : Path
+        The build directory containing the figures directory.
+    extension : str
+        The extension to convert the files to.
+    """    
     if not extension.startswith("."):
         extension = "." + extension
     figures_dir = build_dir / "figures"
@@ -268,6 +368,29 @@ def convert_figures(build_dir: Path, extension: str) -> None:
 
 
 def copy_logo(build_dir: Path, logo: dict, extension: str) -> dict:
+    """Copy the logo files to the build directory and convert them to a different format if necessary.
+
+    Parameters
+    ----------
+    build_dir : Path
+        The build directory to copy the logo files to.
+    logo : dict
+        The logo dictionary containing the paths to the main and footer logos.
+    extension : str
+        The extension to convert the files to.
+
+    Returns
+    -------
+    dict
+        The logo dictionary containing the paths to the copied and converted logo files.
+
+    Raises
+    ------
+    FileExistsError
+        If the logo directory exists but is not a directory.
+    FileNotFoundError
+        If the main or footer logo file is not found.
+    """    
     if logo["main logo"] is None and logo["footer logo"] is None:
         return logo
     if not extension.startswith("."):
@@ -304,6 +427,22 @@ def copy_logo(build_dir: Path, logo: dict, extension: str) -> dict:
 
 
 def copy_styles(base_dir: Path, styles_dir: Path) -> None:
+    """Copy the styles directory from the base directory to the build directory.
+
+    Parameters
+    ----------
+    base_dir : Path
+        The base directory of the project.
+    styles_dir : Path
+        The build directory into which the styles should be copied.
+
+    Raises
+    ------
+    FileExistsError
+        If the styles directory exists but is not a directory.
+    FileNotFoundError
+        If the styles directory is not found.
+    """    
     if not styles_dir.exists():
         styles_dir.mkdir()
     if not styles_dir.is_dir():
@@ -322,6 +461,15 @@ def copy_styles(base_dir: Path, styles_dir: Path) -> None:
 
 
 def create_colour_scheme(styles_dir: Path, colour_scheme: str) -> None:
+    """Use pygmentation to create the colour scheme files for the specified colour scheme and save it as a .css and .tex file.
+
+    Parameters
+    ----------
+    styles_dir : Path
+        The directory to save the colour scheme files to.
+    colour_scheme : str
+        The colour scheme to use.
+    """    
     pyg.set_scheme(colour_scheme)
     scheme = pyg.get_scheme()
 
@@ -333,10 +481,41 @@ def create_colour_scheme(styles_dir: Path, colour_scheme: str) -> None:
 
 
 def sanitize_filename(filename: str) -> str:
+    """Sanitize a filename by removing any characters that are not alphanumeric, _, or -.
+
+    Parameters
+    ----------
+    filename : str
+        The filename to sanitize.
+
+    Returns
+    -------
+    str
+        The sanitized filename.
+    """    
     return "".join([c if c.isalnum() or c in ["_", "-"] else "_" for c in filename])
 
 
 def resolve_filter_path(file_path: str) -> str:
+    """Resolve the path of a filter file. Files which start `$lecturemd` are resolved relative to the filter directory in the lecturemd package, not the current working directory.
+
+    Parameters
+    ----------
+    file_path : str
+        The path of the filter file.
+
+    Returns
+    -------
+    str
+        The resolved path of the filter file.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the filter file is not found.
+    FileNotFoundError
+        If the filter file is not a file.
+    """    
     filter_dir = Path(__file__).parent / "filters"
     if file_path.startswith("$lecturemd"):
         filter_file = filter_dir / file_path[len("$lecturemd/") :]
@@ -349,11 +528,30 @@ def resolve_filter_path(file_path: str) -> str:
     return file_path
 
 
-def run_pandoc(input_file: str, defaults_file: Path, use_pyndoc: bool = False) -> None:
+def run_pandoc(input_file: str, defaults_file: Path, use_pyndoc: Optional[bool] = False) -> None:
+    """Run pandoc (or pyndoc) to convert a file using the specified defaults file.
+
+    Parameters
+    ----------
+    input_file : str
+        The input file to convert.
+    defaults_file : Path
+        The path to the defaults file to use. This is passed as the `--defaults` argument to pandoc.
+    use_pyndoc : Optional[bool], optional
+        Whether to use pyndoc instead of pandoc, by default False
+
+    Raises
+    ------
+    ValueError
+        If pandoc fails to run.
+    """    
     if use_pyndoc:
+        executable = sys.executable
+        if not executable:
+            raise ValueError("Python executable not found")
         result = subprocess.run(
             [
-                "python3",
+                executable,
                 "-m",
                 "pyndoc",
                 "--preprocess",
@@ -373,6 +571,18 @@ def run_pandoc(input_file: str, defaults_file: Path, use_pyndoc: bool = False) -
 
 
 def run_latexmk(tex_file: Path) -> None:
+    """Run latexmk to compile a .tex file.
+
+    Parameters
+    ----------
+    tex_file : Path
+        The .tex file to compile.
+
+    Raises
+    ------
+    ValueError
+        If latexmk fails to run.
+    """    
     result = subprocess.run(
         ["latexmk", "-pdf", "-cd", "-f", "-interaction=nonstopmode", tex_file],
         capture_output=True,
@@ -387,6 +597,23 @@ def run_latexmk(tex_file: Path) -> None:
 
 
 def gather_filters(filters_list: List) -> List:
+    """Gather the filters from a list of filters and sort them by priority.
+
+    Parameters
+    ----------
+    filters_list : List
+        The list of filters to gather.
+
+    Returns
+    -------
+    List
+        The sorted list of filters.
+
+    Raises
+    ------
+    ValueError
+        If the filter dictionary has an invalid structure.
+    """    
     filters = []
     for filter in filters_list:
         if isinstance(filter, dict):
@@ -402,7 +629,14 @@ def gather_filters(filters_list: List) -> List:
     return [resolve_filter_path(f[0]) for f in filters]
 
 
-def write_crossref() -> None:
+def write_crossref() -> Path:
+    """Write the crossref metadata to a file.
+
+    Returns
+    -------
+    Path
+        The path to the crossref metadata file.
+    """    
     crossref_file = base_dir / ".lecturemd" / "defaults" / "crossref.yaml"
     if not crossref_file.parent.exists():
         crossref_file.parent.mkdir(parents=True)
@@ -414,6 +648,20 @@ def write_crossref() -> None:
 def build_pdf_notes(
     base_dir: Path, build_dir: Path, settings: dict, logos: dict
 ) -> None:
+    """Build the PDF notes from the settings and logos.
+
+    Parameters
+    ----------
+    base_dir : Path
+        The base directory of the project.
+    build_dir : Path
+        The build directory to save the notes to.
+    settings : dict
+        The settings dictionary.
+    logos : dict
+        The logos dictionary.
+    """    
+    # Take the name from the subtitle if it exists, or the title if not. If neither exist, use "latex_notes.tex"
     if settings["general"]["subtitle"] is not None:
         tex_file = build_dir / (
             sanitize_filename(settings["general"]["subtitle"]) + "_notes.tex"
@@ -424,12 +672,13 @@ def build_pdf_notes(
         )
     else:
         tex_file = build_dir / "latex_notes.tex"
+    
     pandoc_settings = {
         "writer": "latex",
         "standalone": True,
         "template": str(base_dir / ".lecturemd/templates/latex_notes.tex"),
         "output-file": str(tex_file),
-        "columns": 1000,
+        "columns": 1000, # We want to prevent the default line wrapping in pandoc. This should be large enough to prevent wrapping.
         "default-image-extension": settings["latex"]["figure extension"],
         "metadata": {
             "title": settings["general"]["title"],
@@ -440,6 +689,7 @@ def build_pdf_notes(
         },
     }
 
+    # Add the headers, in order
     header_includes = []
     header_includes.extend(
         [str(base_dir / fname) for fname in settings["latex"]["preamble"]]
@@ -483,6 +733,8 @@ def build_pdf_notes(
     with open(tex_file, "r") as f:
         content = f.read()
 
+    # The default output from pandoc (and especially pandoc-crossref) has a few issues, so we correct them in post before running latexmk (This is why we don't directly call pandoc with pdf output).
+
     for replacement in replacements["latex"]["all"]:
         content = re.sub(replacement[0], replacement[1], content)
 
@@ -498,6 +750,19 @@ def build_pdf_notes(
 def build_pdf_slides(
     base_dir: Path, build_dir: Path, settings: dict, logos: dict
 ) -> None:
+    """Build the PDF slides from the settings and logos.
+
+    Parameters
+    ----------
+    base_dir : Path
+        The base directory of the project.
+    build_dir : Path
+        The build directory to save the slides to.
+    settings : dict
+        The settings dictionary.
+    logos : dict
+        The logos dictionary.
+    """    
     if settings["general"]["subtitle"] is not None:
         tex_file = build_dir / (
             sanitize_filename(settings["general"]["subtitle"]) + "_slides.tex"
@@ -592,6 +857,19 @@ def build_pdf_slides(
 def build_web_notes(
     base_dir: Path, build_dir: Path, settings: dict, logos: dict
 ) -> None:
+    """Build the web notes from the settings and logos.
+
+    Parameters
+    ----------
+    base_dir : Path
+        The base directory of the project.
+    build_dir : Path
+        The build directory to save the notes to.
+    settings : dict
+        The settings dictionary.
+    logos : dict
+        The logos dictionary.
+    """    
     if settings["general"]["subtitle"] is not None:
         html_file = build_dir / (
             sanitize_filename(settings["general"]["subtitle"]) + "_notes.html"
@@ -691,6 +969,19 @@ def build_web_notes(
 def build_web_slides(
     base_dir: Path, build_dir: Path, settings: dict, logos: dict
 ) -> None:
+    """Build the web slides from the settings and logos.
+
+    Parameters
+    ----------
+    base_dir : Path
+        The base directory of the project.
+    build_dir : Path
+        The build directory to save the slides to.
+    settings : dict
+        The settings dictionary.
+    logos : dict
+        The logos dictionary.
+    """    
     if settings["general"]["subtitle"] is not None:
         html_file = build_dir / (
             sanitize_filename(settings["general"]["subtitle"]) + "_slides.html"
@@ -792,6 +1083,19 @@ def build_web_slides(
 def build_web_chunked(
     base_dir: Path, build_dir: Path, settings: dict, logos: dict
 ) -> None:
+    """Build the web chunked output from the settings and logos.
+
+    Parameters
+    ----------
+    base_dir : Path
+        The base directory of the project.
+    build_dir : Path
+        The build directory to save the chunked output to.
+    settings : dict
+        The settings dictionary.
+    logos : dict
+        The logos dictionary.
+    """    
     if settings["general"]["subtitle"] is not None:
         html_file = build_dir / (
             sanitize_filename(settings["general"]["subtitle"]) + "_chunked"

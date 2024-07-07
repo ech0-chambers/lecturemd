@@ -78,9 +78,10 @@ The recommended route for installing the requirements is to use the chocolatey p
 1. Open a command prompt with administrator privileges.
 1. Install the required packages with
     ```cmd
-    choco install python pandoc imagemagick inkscape miktex latexmk
+    choco install python pandoc imagemagick inkscape strawberryperl miktex latexmk
     ```
-1. Open the start menu and search for "App Execution Aliases". <!-- TODO: Finish this instruction step. --->
+1. Open the start menu and search for "Manage App Execution Aliases".
+    1. Ensure that both "App Installer, python.exe" and "App Installer, python3.exe" are **disabled**.
 1. Open a new command prompt with administrator privileges.
 1. Verify that Python has been correctly installed by running
     ```cmd
@@ -89,10 +90,6 @@ The recommended route for installing the requirements is to use the chocolatey p
     The output should be the version of Python that you installed. If instead the Microsoft Store is opened, refer to step 5.
 1. Install Pyndoc by following the instructions in the [Pyndoc README](https://github.com/ech0-chambers/pyndoc/blob/main/README.md#installation).
 1. Install Pygmentation by following the instructions in the [Pygmentation README](https://github.com/ec0-chambers/pygmentation/blob/main/README.md#installation).
-1. Install the required Python packages by running
-    ```cmd
-    pip install pyaml panflute textual pint
-    ```
 1. Install this package
     1. Download this repository and extract it.
     1. Navigate to the extracted directory in your terminal. For example,
