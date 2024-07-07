@@ -111,6 +111,25 @@ def is_installed(program: str) -> bool:
     return shutil.which(program) is not None
 
 
+# If we're on windows, we need to escape backslashes in paths
+def escape_path(path: str) -> str:
+    """Escape backslashes in a path if the operating system is Windows.
+
+    Parameters
+    ----------
+    path : str
+        The path to escape.
+
+    Returns
+    -------
+    str
+        The escaped path.
+    """    
+    if operating_system == Platform.WINDOWS:
+        return path.replace("\\", "\\\\")
+    return path
+
+
 base_dir = Path(".").resolve()
 
 
@@ -626,7 +645,7 @@ def gather_filters(filters_list: List) -> List:
 
     # sort the filters by priority
     filters.sort(key=lambda x: x[1])
-    return [resolve_filter_path(f[0]) for f in filters]
+    return [escape_path(resolve_filter_path(f[0])) for f in filters]
 
 
 def write_crossref() -> Path:
@@ -676,8 +695,8 @@ def build_pdf_notes(
     pandoc_settings = {
         "writer": "latex",
         "standalone": True,
-        "template": str(base_dir / ".lecturemd/templates/latex_notes.tex"),
-        "output-file": str(tex_file),
+        "template": escape_path(str(base_dir / ".lecturemd/templates/latex_notes.tex")),
+        "output-file": escape_path(str(tex_file)),
         "columns": 1000, # We want to prevent the default line wrapping in pandoc. This should be large enough to prevent wrapping.
         "default-image-extension": settings["latex"]["figure extension"],
         "metadata": {
@@ -692,21 +711,21 @@ def build_pdf_notes(
     # Add the headers, in order
     header_includes = []
     header_includes.extend(
-        [str(base_dir / fname) for fname in settings["latex"]["preamble"]]
+        [escape_path(str(base_dir / fname)) for fname in settings["latex"]["preamble"]]
     )
     header_includes.extend(
-        [str(base_dir / fname) for fname in settings["latex"]["notes"]["preamble"]]
+        [escape_path(str(base_dir / fname)) for fname in settings["latex"]["notes"]["preamble"]]
     )
     header_includes.extend(
-        [str(base_dir / fname) for fname in settings["general"]["maths preamble"]]
+        [escape_path(str(base_dir / fname)) for fname in settings["general"]["maths preamble"]]
     )
 
     pandoc_settings["include-in-header"] = header_includes
 
     if not logos["main logo"] is None:
-        pandoc_settings["metadata"]["main-logo"] = str(logos["main logo"]["pdf"])
+        pandoc_settings["metadata"]["main-logo"] = escape_path(str(logos["main logo"]["pdf"]))
     if not logos["footer logo"] is None:
-        pandoc_settings["metadata"]["footer-logo"] = str(logos["footer logo"]["pdf"])
+        pandoc_settings["metadata"]["footer-logo"] = escape_path(str(logos["footer logo"]["pdf"]))
 
     pandoc_settings["filters"] = gather_filters(
         settings["general"]["filters"]
@@ -716,7 +735,7 @@ def build_pdf_notes(
 
     crossref_file = write_crossref()
 
-    pandoc_settings["metadata-files"] = [str(crossref_file)]
+    pandoc_settings["metadata-files"] = [escape_path(str(crossref_file))]
 
     defaults_file = base_dir / ".lecturemd" / "defaults" / "pdf_notes.yaml"
     if not defaults_file.parent.exists():
@@ -776,8 +795,8 @@ def build_pdf_slides(
     pandoc_settings = {
         "writer": "beamer",
         "standalone": True,
-        "template": str(base_dir / ".lecturemd/templates/latex_slides.tex"),
-        "output-file": str(tex_file),
+        "template": escape_path(str(base_dir / ".lecturemd/templates/latex_slides.tex")),
+        "output-file": escape_path(str(tex_file)),
         "columns": 1000,
         "default-image-extension": settings["latex"]["figure extension"],
         "metadata": {
@@ -793,25 +812,25 @@ def build_pdf_slides(
 
     crossref_file = write_crossref()
 
-    pandoc_settings["metadata-files"] = [str(crossref_file)]
+    pandoc_settings["metadata-files"] = [escape_path(str(crossref_file))]
 
     header_includes = []
     header_includes.extend(
-        [str(base_dir / fname) for fname in settings["latex"]["preamble"]]
+        [escape_path(str(base_dir / fname)) for fname in settings["latex"]["preamble"]]
     )
     header_includes.extend(
-        [str(base_dir / fname) for fname in settings["latex"]["slides"]["preamble"]]
+        [escape_path(str(base_dir / fname)) for fname in settings["latex"]["slides"]["preamble"]]
     )
     header_includes.extend(
-        [str(base_dir / fname) for fname in settings["general"]["maths preamble"]]
+        [escape_path(str(base_dir / fname)) for fname in settings["general"]["maths preamble"]]
     )
 
     pandoc_settings["include-in-header"] = header_includes
 
     if not logos["main logo"] is None:
-        pandoc_settings["metadata"]["main-logo"] = str(logos["main logo"]["pdf"])
+        pandoc_settings["metadata"]["main-logo"] = escape_path(str(logos["main logo"]["pdf"]))
     if not logos["footer logo"] is None:
-        pandoc_settings["metadata"]["footer-logo"] = str(logos["footer logo"]["pdf"])
+        pandoc_settings["metadata"]["footer-logo"] = escape_path(str(logos["footer logo"]["pdf"]))
 
     pandoc_settings["filters"] = gather_filters(
         settings["general"]["filters"]
@@ -884,11 +903,11 @@ def build_web_notes(
     pandoc_settings = {
         "writer": "html",
         "standalone": True,
-        "template": str(base_dir / ".lecturemd/templates/html_notes.html"),
+        "template": escape_path(str(base_dir / ".lecturemd/templates/html_notes.html")),
         "html-math-method": {
             "method": "mathjax",
         },
-        "output-file": str(html_file),
+        "output-file": escape_path(str(html_file)),
         "columns": 1000,
         "default-image-extension": settings["html"]["figure extension"],
         "metadata": {
@@ -905,14 +924,14 @@ def build_web_notes(
 
     crossref_file = write_crossref()
 
-    pandoc_settings["metadata-files"] = [str(crossref_file)]
+    pandoc_settings["metadata-files"] = [escape_path(str(crossref_file))]
 
     header_includes = []
     header_includes.extend(
-        [str(base_dir / fname) for fname in settings["html"]["preamble"]]
+        [escape_path(str(base_dir / fname)) for fname in settings["html"]["preamble"]]
     )
     header_includes.extend(
-        [str(base_dir / fname) for fname in settings["html"]["notes"]["preamble"]]
+        [escape_path(str(base_dir / fname)) for fname in settings["html"]["notes"]["preamble"]]
     )
     to_remove = []
     for fname in settings["general"]["maths preamble"]:
@@ -922,15 +941,15 @@ def build_web_notes(
         html_fname = build_dir / (Path(fname).stem + ".html")
         with open(html_fname, "w+") as f:
             f.write("\\(" + content + "\\)")
-        header_includes.append(str(html_fname))
+        header_includes.append(escape_path(str(html_fname)))
         to_remove.append(html_fname)
 
     pandoc_settings["include-in-header"] = header_includes
 
     if not logos["main logo"] is None:
-        pandoc_settings["metadata"]["main-logo"] = str(logos["main logo"]["web"])
+        pandoc_settings["metadata"]["main-logo"] = escape_path(str(logos["main logo"]["web"]))
     if not logos["footer logo"] is None:
-        pandoc_settings["metadata"]["footer-logo"] = str(logos["footer logo"]["web"])
+        pandoc_settings["metadata"]["footer-logo"] = escape_path(str(logos["footer logo"]["web"]))
 
     pandoc_settings["filters"] = gather_filters(
         settings["general"]["filters"]
@@ -996,11 +1015,11 @@ def build_web_slides(
     pandoc_settings = {
         "writer": "revealjs",
         "standalone": True,
-        "template": str(base_dir / ".lecturemd/templates/html_slides.html"),
+        "template": escape_path(str(base_dir / ".lecturemd/templates/html_slides.html")),
         "html-math-method": {
             "method": "mathjax",
         },
-        "output-file": str(html_file),
+        "output-file": escape_path(str(html_file)),
         "columns": 1000,
         "default-image-extension": settings["html"]["figure extension"],
         "metadata": {
@@ -1019,14 +1038,14 @@ def build_web_slides(
 
     crossref_file = write_crossref()
 
-    pandoc_settings["metadata-files"] = [str(crossref_file)]
+    pandoc_settings["metadata-files"] = [escape_path(str(crossref_file))]
 
     header_includes = []
     header_includes.extend(
-        [str(base_dir / fname) for fname in settings["html"]["preamble"]]
+        [escape_path(str(base_dir / fname)) for fname in settings["html"]["preamble"]]
     )
     header_includes.extend(
-        [str(base_dir / fname) for fname in settings["html"]["slides"]["preamble"]]
+        [escape_path(str(base_dir / fname)) for fname in settings["html"]["slides"]["preamble"]]
     )
     to_remove = []
     for fname in settings["general"]["maths preamble"]:
@@ -1036,15 +1055,15 @@ def build_web_slides(
         html_fname = build_dir / (Path(fname).stem + ".html")
         with open(html_fname, "w+") as f:
             f.write("\\(" + content + "\\)")
-        header_includes.append(str(html_fname))
+        header_includes.append(escape_path(str(html_fname)))
         to_remove.append(html_fname)
 
     pandoc_settings["include-in-header"] = header_includes
 
     if not logos["main logo"] is None:
-        pandoc_settings["metadata"]["main-logo"] = str(logos["main logo"]["web"])
+        pandoc_settings["metadata"]["main-logo"] = escape_path(str(logos["main logo"]["web"]))
     if not logos["footer logo"] is None:
-        pandoc_settings["metadata"]["footer-logo"] = str(logos["footer logo"]["web"])
+        pandoc_settings["metadata"]["footer-logo"] = escape_path(str(logos["footer logo"]["web"]))
 
     pandoc_settings["filters"] = gather_filters(
         settings["general"]["filters"]
@@ -1117,11 +1136,11 @@ def build_web_chunked(
     pandoc_settings = {
         "writer": "chunkedhtml",
         "standalone": True,
-        "template": str(base_dir / ".lecturemd/templates/html_chunked.html"),
+        "template": escape_path(str(base_dir / ".lecturemd/templates/html_chunked.html")),
         "html-math-method": {
             "method": "mathjax",
         },
-        "output-file": str(html_file),
+        "output-file": escape_path(str(html_file)),
         "columns": 1000,
         "default-image-extension": settings["html"]["figure extension"],
         "metadata": {
@@ -1139,14 +1158,14 @@ def build_web_chunked(
 
     crossref_file = write_crossref()
 
-    pandoc_settings["metadata-files"] = [str(crossref_file)]
+    pandoc_settings["metadata-files"] = [escape_path(str(crossref_file))]
 
     header_includes = []
     header_includes.extend(
-        [str(base_dir / fname) for fname in settings["html"]["preamble"]]
+        [escape_path(str(base_dir / fname)) for fname in settings["html"]["preamble"]]
     )
     header_includes.extend(
-        [str(base_dir / fname) for fname in settings["html"]["notes"]["preamble"]]
+        [escape_path(str(base_dir / fname)) for fname in settings["html"]["notes"]["preamble"]]
     )
     to_remove = []
     for fname in settings["general"]["maths preamble"]:
@@ -1156,15 +1175,15 @@ def build_web_chunked(
         html_fname = build_dir / (Path(fname).stem + ".html")
         with open(html_fname, "w+") as f:
             f.write("\\(" + content + "\\)")
-        header_includes.append(str(html_fname))
+        header_includes.append(escape_path(str(html_fname)))
         to_remove.append(html_fname)
 
     pandoc_settings["include-in-header"] = header_includes
 
     if not logos["main logo"] is None:
-        pandoc_settings["metadata"]["main-logo"] = str(logos["main logo"]["web"])
+        pandoc_settings["metadata"]["main-logo"] = escape_path(str(logos["main logo"]["web"]))
     if not logos["footer logo"] is None:
-        pandoc_settings["metadata"]["footer-logo"] = str(logos["footer logo"]["web"])
+        pandoc_settings["metadata"]["footer-logo"] = escape_path(str(logos["footer logo"]["web"]))
 
     pandoc_settings["filters"] = gather_filters(
         settings["general"]["filters"]
