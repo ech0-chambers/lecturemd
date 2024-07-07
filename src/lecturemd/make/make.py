@@ -10,6 +10,45 @@ import re
 
 from enum import Enum
 import platform
+import time
+
+from rich.progress import Progress, TimeElapsedColumn, TextColumn, BarColumn
+
+def format_elapsed_time(t_ns: float):
+    # time is in nanoseconds, format in an appropriate unit to 3 significant figures (NOT 3 decimal places)
+    timestring = None
+    unit = None
+    if t_ns < 1e3:
+        # return f"{t_ns:#.3g} ns"
+        timestring = f"{t_ns:#.3g}"
+        unit = "ns"
+    elif t_ns < 1e6:
+        # return f"{t_ns / 1e3:#.3g} \xb5s"
+        timestring = f"{t_ns / 1e3:#.3g}"
+        unit = "\xb5s"
+    elif t_ns < 1e9:
+        # return f"{t_ns / 1e6:#.3g} ms"
+        timestring = f"{t_ns / 1e6:#.3g}"
+        unit = "ms"
+    elif t_ns < 60e9:
+        # return f"{t_ns / 1e9:#.3g} s"
+        timestring = f"{t_ns / 1e9:#.3g}"
+        unit = "s"
+    elif t_ns < 60e9 * 60:
+        # return as ##m ##s
+        m = int(t_ns / 60e9)
+        s = int((t_ns - m * 60e9) / 1e9)
+        return f"{m}m {s:0>2d}s"
+    else:
+        # return as ##h ##m ##s. I really hope we never need this
+        h = int(t_ns / 3600e9)
+        m = int((t_ns - h * 3600e9) / 60e9)
+        s = int((t_ns - h * 3600e9 - m * 60e9) / 1e9)
+        return f"{h}h {m:0>2d}m {s:0>2d}s"
+
+    if timestring.endswith("."):
+        timestring = timestring[:-1]
+    return timestring + " " + unit
 
 
 class Platform(Enum):
@@ -341,7 +380,7 @@ def run_latexmk(tex_file: Path) -> None:
         print(result.stderr.decode("utf-8"))
         raise ValueError("Latexmk failed to run")
     # use latexmk -c to clean up
-    subprocess.run(["latexmk", "-c", "-cd", tex_file])
+    subprocess.run(["latexmk", "-c", "-cd", tex_file], capture_output=True)
     # remove the tex file
     tex_file.unlink()
 
@@ -868,6 +907,10 @@ def build_web_chunked(
         with open(file, "w+") as f:
             f.write(content)
 
+def end_progress_task(task: int, progress: Progress):
+    progress.start_task(task)
+    progress.update(task, total = 1, completed = 1, visible = False)
+
 
 def main(
     build_dir: Path,
@@ -886,19 +929,53 @@ def main(
     )
     copy_styles(base_dir, styles_dir)
     create_colour_scheme(styles_dir, settings["general"]["colour scheme"])
-    if output in ["pdf", "all"]:
-        if format is None or format == "notes":
-            build_pdf_notes(base_dir, build_dir, settings, logos)
-        if format is None or format == "slides":
-            build_pdf_slides(base_dir, build_dir, settings, logos)
-    if output in ["web", "all"]:
-        if format is None or format == "notes":
-            build_web_notes(base_dir, build_dir, settings, logos)
-        if format is None or format == "slides":
-            build_web_slides(base_dir, build_dir, settings, logos)
-        if format is None or format == "chunked":
-            build_web_chunked(base_dir, build_dir, settings, logos)
-
+    with Progress(
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TimeElapsedColumn(),
+    ) as progress:
+        if output in ["pdf", "all"]:
+            if format is None or format == "notes":
+                task = progress.add_task("Building PDF notes", total=None)
+                start_time = time.perf_counter_ns()
+                build_pdf_notes(base_dir, build_dir, settings, logos)
+                end_time = time.perf_counter_ns()
+                end_progress_task(task, progress)
+                progress.console.print(f"Built PDF notes in {format_elapsed_time(end_time - start_time)}")
+            if format is None or format == "slides":
+                task = progress.add_task("Building PDF slides", total=None)
+                start_time = time.perf_counter_ns()
+                build_pdf_slides(base_dir, build_dir, settings, logos)
+                end_time = time.perf_counter_ns()
+                end_progress_task(task, progress)
+                progress.console.print(f"Built PDF slides in {format_elapsed_time(end_time - start_time)}")
+        if output in ["web", "all"]:
+            if format is None or format == "notes":
+                task = progress.add_task("Building web notes", total=None)
+                start_time = time.perf_counter_ns()
+                build_web_notes(base_dir, build_dir, settings, logos)
+                end_time = time.perf_counter_ns()
+                end_progress_task(task, progress)
+                progress.console.print(f"Built web notes in {format_elapsed_time(end_time - start_time)}")
+            if format is None or format == "slides":
+                task = progress.add_task("Building web slides", total=None)
+                start_time = time.perf_counter_ns()
+                build_web_slides(base_dir, build_dir, settings, logos)
+                end_time = time.perf_counter_ns()
+                end_progress_task(task, progress)
+                progress.console.print(f"Built web slides in {format_elapsed_time(end_time - start_time)}")
+            if format is None or format == "chunked":
+                task = progress.add_task("Building web chunked", total=None)
+                start_time = time.perf_counter_ns()
+                build_web_chunked(base_dir, build_dir, settings, logos)
+                end_time = time.perf_counter_ns()
+                end_progress_task(task, progress)
+                progress.console.print(f"Built web chunked in {format_elapsed_time(end_time - start_time)}")
+    # remove any log files we generated. filter.log, pyndoc.*.log
+    for file in base_dir.glob("filter.log"):
+        file.unlink()
+    for file in base_dir.glob("pyndoc.*.log"):
+        file.unlink()
 
 if __name__ == "__main__":
     args = parse_args()
