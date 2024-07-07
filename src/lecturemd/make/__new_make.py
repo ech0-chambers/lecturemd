@@ -8,6 +8,37 @@ import pygmentation.pygmentation as pyg
 import datetime
 import re
 
+from enum import Enum
+import platform
+
+
+class Platform(Enum):
+    LINUX = 0
+    WINDOWS = 1
+    MAC = 2
+    JAVA = 3
+    UNKNOWN = 4
+
+def get_platform() -> Platform:
+    system = platform.system()
+    if system == "Linux":
+        return Platform.LINUX
+    elif system == "Windows":
+        return Platform.WINDOWS
+    elif system == "Darwin":
+        return Platform.MAC
+    elif system == "Java":
+        return Platform.JAVA
+    else:
+        return Platform.UNKNOWN
+
+operating_system = get_platform()
+if operating_system == Platform.UNKNOWN:
+    print("Warning: Unsupported or unknown operating system. This can cause unexpected results or unhelpful errors.")
+
+
+def is_installed(program: str) -> bool:
+    return shutil.which(program) is not None
 
 base_dir = Path(".").resolve()
 
@@ -124,6 +155,32 @@ def copy_figures(base_dir: Path, build_dir: Path) -> None:
     shutil.copytree(figures_dir, target_figures_dir, dirs_exist_ok=True)
 
 
+def convert_file(source: Path, extension: str, dest: Path = None) -> None:
+    if not extension.startswith("."):
+        extension = "." + extension
+    if dest is None:
+        dest = source.with_suffix(extension)
+    if extension == ".svg":
+        if is_installed("pdf2svg"):
+            subprocess.run(["pdf2svg", source, dest])
+            return dest
+        if is_installed("inkscape"):
+            subprocess.run(["inkscape", source, "--export-type=svg", "--export-filename=" + dest])
+            return dest
+        raise FileNotFoundError("Both pdf2svg and inkscape are not installed. Unable to convert file for web output.")
+    
+    if operating_system in [Platform.LINUX, Platform.MAC]:
+        if not is_installed("convert"):
+            raise FileNotFoundError("ImageMagick is not installed. Unable to convert file for web output.")
+        subprocess.run(["convert", "-density", "300", "-quality", "100", source, dest])
+        return dest
+    if operating_system == Platform.WINDOWS:
+        if not is_installed("magick"):
+            raise FileNotFoundError("ImageMagick is not installed. Unable to convert file for web output.")
+        subprocess.run(["magick", "-density", "300", "-quality", "100", source, dest])
+        return dest
+    raise Exception("Unsupported or unknown operating system. Unable to convert file for web output.")
+
 def convert_figures(build_dir: Path, extension: str) -> None:
     # Convert any pdf files in the figures directory to the specified extension
     # if svg, use pdf2svg
@@ -136,11 +193,7 @@ def convert_figures(build_dir: Path, extension: str) -> None:
             continue
         if not figure.suffix == ".pdf":
             continue
-        if extension == ".svg":
-            subprocess.run(["pdf2svg", figure, figure.with_suffix(".svg")])
-        else:
-            subprocess.run(["convert", "-density", "300", "-quality", "100", figure, figure.with_suffix(extension)])
-
+        convert_file(figure, extension)
 
 def copy_logo(build_dir: Path, logo: dict, extension: str) -> dict:
     if logo["main logo"] is None and logo["footer logo"] is None:
@@ -169,12 +222,8 @@ def copy_logo(build_dir: Path, logo: dict, extension: str) -> dict:
         logos[logo_type] = {"pdf": logo_dir/new_logo_file.name}
         # if it's a pdf, convert the file to the specified extension
         if logo_file.suffix == ".pdf":
-            if extension == ".svg":
-                subprocess.run(["pdf2svg", new_logo_file, new_logo_file.with_suffix(".svg")])
-                logos[logo_type]["web"] = "figures/logo/" + new_logo_file.with_suffix(".svg").name
-            else:
-                subprocess.run(["convert", "-density", "300", new_logo_file, "-quality", "100", new_logo_file.with_suffix(extension)])
-                logos[logo_type]["web"] = "figures/logo/" + new_logo_file.with_suffix(extension).name
+            new_logo_file = convert_file(new_logo_file, extension)
+            logos[logo_type]["web"] = "figures/logo/" + new_logo_file.name
         else:
             logos[logo_type]["web"] = "figures/logo/" + new_logo_file.name
     return logos
@@ -581,6 +630,9 @@ def build_web_chunked(base_dir: Path, build_dir: Path, settings: dict, logos: di
         else:
             html_file.unlink()
 
+    if not html_file.exists():
+        html_file.mkdir(parents=True)
+
     pandoc_settings = {
         "writer": "chunkedhtml",
         "standalone": True,
@@ -598,7 +650,6 @@ def build_web_chunked(base_dir: Path, build_dir: Path, settings: dict, logos: di
             "date": settings["general"]["date"],
             "institution": settings["general"]["institution"],
         },
-        "resource-path": ["build"],
         "split-level": 3,
         "toc": True,
         "css": settings["html"]["styles"] + settings["html"]["notes"]["styles"],
@@ -637,15 +688,14 @@ def build_web_chunked(base_dir: Path, build_dir: Path, settings: dict, logos: di
     with open(defaults_file, "w+") as f:
         yaml.dump(pandoc_settings, f)
 
-    run_pandoc(settings["general"]["main file"], defaults_file, settings["general"]["use pyndoc"])
-
+    
     # copy the `build/styles` directory into the html_file directory
     shutil.copytree(base_dir/"build"/"styles", html_file/"styles", dirs_exist_ok=True)
 
-    # # same with the figures logo directory
-    logo_source_dir = base_dir/"build"/"figures"/"logo"
-    if logo_source_dir.exists():
-        shutil.copytree(logo_source_dir, html_file/"figures/logo", dirs_exist_ok=True)
+    # same with the figures directory
+    shutil.copytree(base_dir/"build"/"figures", html_file/"figures", dirs_exist_ok=True)
+
+    run_pandoc(settings["general"]["main file"], defaults_file, settings["general"]["use pyndoc"])
 
     for file in to_remove:
         file.unlink()

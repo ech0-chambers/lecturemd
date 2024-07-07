@@ -2,7 +2,33 @@ import shutil
 from typing import List
 from rich.table import Table
 from rich import print as rprint
+from enum import Enum
+import platform
 
+
+class Platform(Enum):
+    LINUX = 0
+    WINDOWS = 1
+    MAC = 2
+    JAVA = 3
+    UNKNOWN = 4
+
+def get_platform() -> Platform:
+    system = platform.system()
+    if system == "Linux":
+        return Platform.LINUX
+    elif system == "Windows":
+        return Platform.WINDOWS
+    elif system == "Darwin":
+        return Platform.MAC
+    elif system == "Java":
+        return Platform.JAVA
+    else:
+        return Platform.UNKNOWN
+
+operating_system = get_platform()
+if operating_system == Platform.UNKNOWN:
+    raise Exception("Unsupported or unknown operating system. Cannot check requirements.")
 
 def is_installed(program: str) -> bool:
     return shutil.which(program) is not None
@@ -55,7 +81,7 @@ requirements = [
     },
     {
         "program": "imagemagick",
-        "installed": is_installed("convert"),
+        "installed": is_installed("convert") if operating_system in [Platform.LINUX, Platform.MAC] else is_installed("magick"),
         "fail_message": "imagemagick is not installed\n\tPlease install it from [link=https://imagemagick.org/script/download.php]https://imagemagick.org/script/download[/link]",
     },
 ]
