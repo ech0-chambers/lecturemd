@@ -312,7 +312,7 @@ def convert_file(source: Path, extension: str, dest: Optional[Path] = None) -> P
             return dest
         if is_installed("inkscape"):
             subprocess.run(
-                ["inkscape", source, "--export-type=svg", "--export-filename=" + dest]
+                ["inkscape", source, "--export-type=svg", "--export-filename=" + str(dest)]
             )
             return dest
         raise FileNotFoundError(
