@@ -58,34 +58,7 @@ def format_elapsed_time(t_ns: float) -> str:
         timestring = timestring[:-1]
     return timestring + " " + unit
 
-
-class Platform(Enum):
-    LINUX = 0
-    WINDOWS = 1
-    MAC = 2
-    JAVA = 3
-    UNKNOWN = 4
-
-
-def get_platform() -> Platform:
-    """Get the current platform.
-
-    Returns
-    -------
-    Platform
-        The current platform.
-    """    
-    system = platform.system()
-    if system == "Linux":
-        return Platform.LINUX
-    elif system == "Windows":
-        return Platform.WINDOWS
-    elif system == "Darwin":
-        return Platform.MAC
-    elif system == "Java":
-        return Platform.JAVA
-    else:
-        return Platform.UNKNOWN
+from ..platform import Platform, get_platform
 
 
 operating_system = get_platform()
@@ -540,7 +513,12 @@ def resolve_filter_path(file_path: str) -> str:
         filter_file = filter_dir / file_path[len("$lecturemd/") :]
         filter_file = filter_file.resolve().absolute()
         if not filter_file.exists():
-            raise FileNotFoundError(f'Filter file "{filter_file}" not found')
+            if operating_system == Platform.WINDOWS:
+                windows_filter_file = filter_file.with_suffix(".exe")
+                if windows_filter_file.exists():
+                    filter_file = windows_filter_file
+                else:
+                    raise FileNotFoundError(f'Filter file "{filter_file}" not found')
         if not filter_file.is_file():
             raise FileNotFoundError(f'Filter file "{filter_file}" is not a file')
         return str(filter_file)

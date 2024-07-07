@@ -5,6 +5,12 @@ from rich.prompt import Confirm
 from rich import print as rprint
 import argparse
 
+from ..platform import Platform, get_platform
+
+operating_system = get_platform()
+
+pandoc_crossref = "$lecturemd/pandoc-crossref" if operating_system == Platform.LINUX else "$lecturemd/pandoc-crossref.exe" if operating_system == Platform.WINDOWS else "$lecturemd/pandoc-crossref-macos" if operating_system == Platform.MAC else "$lecturemd/pandoc-crossref"
+
 base_settings = {
     "general": {
         "colour scheme": "urban",
@@ -19,7 +25,7 @@ base_settings = {
         "filters": [
             "$lecturemd/notesslides.py",
             "$lecturemd/format_filter.py",
-            {"$lecturemd/pandoc-crossref": 10},
+            {pandoc_crossref: 10},
         ],
         "main file": "main.md",
         "logo": {"main logo": None, "footer logo": None},
