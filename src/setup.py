@@ -18,7 +18,7 @@ setup(
     ],
     entry_points={"console_scripts": ["lecturemd = lecturemd.__main__:main"]},
     package_data={
-        "lecturemd.new": ["templates/*", "styles/*"],
+        "lecturemd.new": ["templates/*", "styles/*", "templates/latex_packages/*"],
         "lecturemd.configure": ["configure.tcss", "ncl.tcss"],
         "lecturemd.make": ["filters/*"],
     },
