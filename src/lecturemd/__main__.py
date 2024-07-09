@@ -10,7 +10,7 @@ def parse_args():
     #     -c mutually exclusive with -I
     # lecturemd configure
     # (Will add configuration options later -- browser command, etc.)
-    # lecturemd build all|pdf|web [notes|slides|chunked]
+    # lecturemd build --keep-temp|-k all|pdf|web [notes|slides|chunked]
 
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="subcommand")
@@ -37,6 +37,12 @@ def parse_args():
     configure_parser = subparsers.add_parser("configure")
     build_parser = subparsers.add_parser("build")
     build_parser.add_argument(
+        "--keep-temp",
+        "-k",
+        action="store_true",
+        help="Keep the temporary (log) files after building the lecture",
+    )
+    build_parser.add_argument(
         "format",
         choices=["all", "pdf", "web"],
         help="The format to build the lecture in",
@@ -59,7 +65,7 @@ def configure(args):
     configure_main()
 
 def build(args):
-    build_main(Path(".").resolve(), args.format, args.output)
+    build_main(Path(".").resolve(), args.format, args.output, args.keep_temp)
 
 
 def main():

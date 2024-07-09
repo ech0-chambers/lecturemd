@@ -4,6 +4,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
@@ -33,6 +34,13 @@ $endfor$
 $for(header-includes)$
   $header-includes$
 $endfor$
+<div class = "maths-preamble">
+  \(
+  $for(maths-preambles)$
+    $maths-preambles$
+  $endfor$
+  \)
+</div>
 $if(math)$
 $if(mathjax)$
   <script>
@@ -61,32 +69,7 @@ $endfor$
   <span class="header-subtitle">$subtitle$</span>
   $endif$
 </header>
-<nav id="sitenav">
-<div class="sitenav">
-<span class="navlink">
-$if(up.url)$
-<span class="navlink-label">Up:</span> <a href="$up.url$" accesskey="u" rel="up">$up.title$</a>
-$endif$
-</span>
-<span class="navlink">
-$if(top)$
-<span class="navlink-label">Top:</span> <a href="$top.url$" accesskey="t" rel="top">$top.title$</a>
-$endif$
-</span>
-</div>
-<div class="sitenav">
-<span class="navlink">
-$if(next.url)$
-<span class="navlink-label">Next:</span> <a href="$next.url$" accesskey="n" rel="next">$next.title$</a>
-$endif$
-</span>
-<span class="navlink">
-$if(previous.url)$
-<span class="navlink-label">Previous:</span> <a href="$previous.url$" accesskey="p" rel="previous">$previous.title$</a>
-$endif$
-</span>
-</div>
-</nav>
+<div id="content">
 $if(top)$
 $-- only print title block if this is NOT the top page
 $else$
@@ -123,6 +106,51 @@ $body$
 $for(include-after)$
 $include-after$
 $endfor$
+$if(top)$
+<div id="lower-nav">
+  $if(up.url)$
+  <div class = "nav-up">
+    <a href="$up.url$">
+      <span class="material-symbols-outlined">
+        arrow_upward
+      </span>
+      $up.title$
+    </a>
+  </div>
+  $endif$
+  $if(top.url)$
+  <div class = "nav-top">
+    <a href="$top.url$">
+      $top.title$ 
+      <span class="material-symbols-outlined">
+        home
+      </span>
+    </a>
+  </div>
+  $endif$
+  $if(previous.url)$
+  <div class = "nav-previous">
+    <a href="$previous.url$">
+      <span class="material-symbols-outlined">
+        arrow_back
+      </span>
+      $previous.title$
+    </a>
+  </div>
+  $endif$
+  $if(next.url)$
+  <div class = "nav-next">
+    <a href="$next.url$">
+      $next.title$
+      <span class="material-symbols-outlined">
+        arrow_forward
+      </span>
+    </a>
+  </div>
+  $endif$
+</div>
+$endif$
+</div>
 <footer id="footer-bar">
   $if(footer-logo)$
   <img src="$footer-logo$" alt="Logo" class="footer-logo" />

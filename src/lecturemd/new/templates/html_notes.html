@@ -30,6 +30,13 @@ $endfor$
 $for(header-includes)$
   $header-includes$
 $endfor$
+<div class = "maths-preamble">
+  \(
+  $for(maths-preambles)$
+    $maths-preambles$
+  $endfor$
+  \)
+</div>
 $if(math)$
 $if(mathjax)$
   <script>
@@ -58,6 +65,7 @@ $endfor$
   <span class="header-subtitle">$subtitle$</span>
   $endif$
 </header>
+<div id = "content">
 $if(title)$
 <header id="title-block-header">
 <h1 class="title">$title$</h1>
@@ -93,6 +101,7 @@ $body$
 $for(include-after)$
 $include-after$
 $endfor$
+</div>
 <footer id="footer-bar">
   $if(footer-logo)$
   <img src="$footer-logo$" alt="Logo" class="footer-logo" />

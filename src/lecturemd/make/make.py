@@ -183,8 +183,14 @@ replacements = {
 
 
 def parse_args():
-    # python3 make.py web|pdf [notes|slides|chunked]
+    # python3 make.py --keep-temp|-k web|pdf [notes|slides|chunked]
     parser = argparse.ArgumentParser(description="Build a lecturemd project")
+    parser.add_argument(
+        "--keep-temp",
+        "-k",
+        action="store_true",
+        help="Keep temporary files after building.",
+    )
     parser.add_argument("output", choices=["web", "pdf", "all"], help="Output format.")
     parser.add_argument(
         "format",
@@ -894,6 +900,7 @@ def build_web_notes(
             "author": settings["general"]["author"],
             "date": settings["general"]["date"],
             "institution": settings["general"]["institution"],
+            "maths-preambles": settings["general"]["maths preamble"],
         },
         "toc": True,
         "toc-depth": 4,
@@ -911,16 +918,22 @@ def build_web_notes(
     header_includes.extend(
         [escape_path(str(base_dir / fname)) for fname in settings["html"]["notes"]["preamble"]]
     )
-    to_remove = []
+   
+    
+    # We're not using --include-in-header for the maths preambles so that we're
+    # able to separate them and force them into math mode for mathjax, and also
+    # hide them while they're loading. This means that we need to add their
+    # *content* to the metadata instead of the file path, and that any newlines
+    # will be removed by pandoc. We'll split them into separate lines in the
+    # template. This leads to somewhat ridiculous looking defaults files, but it
+    # seems to be the only way to handle this.
+    maths_preambles = []
     for fname in settings["general"]["maths preamble"]:
-        # this is a .tex file, we need to create a .html file with the same name and content, but encased in \(...\) for mathjax
         with open(base_dir / fname, "r") as f:
             content = f.read()
-        html_fname = build_dir / (Path(fname).stem + ".html")
-        with open(html_fname, "w+") as f:
-            f.write("\\(" + content + "\\)")
-        header_includes.append(escape_path(str(html_fname)))
-        to_remove.append(html_fname)
+        maths_preambles.extend(content.split("\n")) # use a new list element for each line so that pandoc doesn't gobble newlines
+
+    pandoc_settings["metadata"]["maths-preambles"] = maths_preambles
 
     pandoc_settings["include-in-header"] = header_includes
 
@@ -946,9 +959,6 @@ def build_web_notes(
         defaults_file,
         settings["general"]["use pyndoc"],
     )
-
-    for file in to_remove:
-        file.unlink()
 
     with open(html_file, "r") as f:
         content = f.read()
@@ -1025,16 +1035,22 @@ def build_web_slides(
     header_includes.extend(
         [escape_path(str(base_dir / fname)) for fname in settings["html"]["slides"]["preamble"]]
     )
-    to_remove = []
+   
+    
+    # We're not using --include-in-header for the maths preambles so that we're
+    # able to separate them and force them into math mode for mathjax, and also
+    # hide them while they're loading. This means that we need to add their
+    # *content* to the metadata instead of the file path, and that any newlines
+    # will be removed by pandoc. We'll split them into separate lines in the
+    # template. This leads to somewhat ridiculous looking defaults files, but it
+    # seems to be the only way to handle this.
+    maths_preambles = []
     for fname in settings["general"]["maths preamble"]:
-        # this is a .tex file, we need to create a .html file with the same name and content, but encased in \(...\) for mathjax
         with open(base_dir / fname, "r") as f:
             content = f.read()
-        html_fname = build_dir / (Path(fname).stem + ".html")
-        with open(html_fname, "w+") as f:
-            f.write("\\(" + content + "\\)")
-        header_includes.append(escape_path(str(html_fname)))
-        to_remove.append(html_fname)
+        maths_preambles.extend(content.split("\n")) # use a new list element for each line so that pandoc doesn't gobble newlines
+
+    pandoc_settings["metadata"]["maths-preambles"] = maths_preambles
 
     pandoc_settings["include-in-header"] = header_includes
 
@@ -1060,9 +1076,6 @@ def build_web_slides(
         defaults_file,
         settings["general"]["use pyndoc"],
     )
-
-    for file in to_remove:
-        file.unlink()
 
     with open(html_file, "r") as f:
         content = f.read()
@@ -1145,16 +1158,22 @@ def build_web_chunked(
     header_includes.extend(
         [escape_path(str(base_dir / fname)) for fname in settings["html"]["notes"]["preamble"]]
     )
-    to_remove = []
+   
+    
+    # We're not using --include-in-header for the maths preambles so that we're
+    # able to separate them and force them into math mode for mathjax, and also
+    # hide them while they're loading. This means that we need to add their
+    # *content* to the metadata instead of the file path, and that any newlines
+    # will be removed by pandoc. We'll split them into separate lines in the
+    # template. This leads to somewhat ridiculous looking defaults files, but it
+    # seems to be the only way to handle this.
+    maths_preambles = []
     for fname in settings["general"]["maths preamble"]:
-        # this is a .tex file, we need to create a .html file with the same name and content, but encased in \(...\) for mathjax
         with open(base_dir / fname, "r") as f:
             content = f.read()
-        html_fname = build_dir / (Path(fname).stem + ".html")
-        with open(html_fname, "w+") as f:
-            f.write("\\(" + content + "\\)")
-        header_includes.append(escape_path(str(html_fname)))
-        to_remove.append(html_fname)
+        maths_preambles.extend(content.split("\n")) # use a new list element for each line so that pandoc doesn't gobble newlines
+
+    pandoc_settings["metadata"]["maths-preambles"] = maths_preambles
 
     pandoc_settings["include-in-header"] = header_includes
 
@@ -1190,9 +1209,6 @@ def build_web_chunked(
     logo_source_dir = base_dir / "build" / "figures" / "logo"
     if logo_source_dir.exists():
         shutil.copytree(logo_source_dir, html_file / "figures/logo", dirs_exist_ok=True)
-
-    for file in to_remove:
-        file.unlink()
 
     files = [f for f in html_file.iterdir() if f.is_file() and f.suffix == ".html"]
 
@@ -1233,6 +1249,7 @@ def main(
     build_dir: Path,
     output: str,
     format: str | None,
+    keep_temp: bool = False,
 ):
     build_dir: Path = base_dir / "build"
     styles_dir = build_dir / "styles"
@@ -1269,10 +1286,13 @@ def main(
                 with TimedBuild(progress, "Web chunked notes"):
                     build_web_chunked(base_dir, build_dir, settings, logos)
     # remove any log files we generated. filter.log, pyndoc.*.log
-    for file in base_dir.glob("filter.log"):
-        file.unlink()
-    for file in base_dir.glob("pyndoc.*.log"):
-        file.unlink()
+    if not keep_temp:
+        for file in base_dir.glob("filter.log"):
+            file.unlink()
+        for file in base_dir.glob("pyndoc.*.log"):
+            file.unlink()
+        for file in base_dir.glob("pyndoc.log"):
+            file.unlink()
 
 
 if __name__ == "__main__":
