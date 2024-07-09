@@ -318,7 +318,7 @@ def convert_file(source: Path, extension: str, dest: Optional[Path] = None) -> P
             return dest
         if is_installed("inkscape"):
             subprocess.run(
-                ["inkscape", source, "--export-type=svg", "--export-filename=" + dest]
+                ["inkscape", source, "--export-type=svg", "--export-filename=" + str(dest)]
             )
             return dest
         raise FileNotFoundError(
@@ -708,8 +708,12 @@ def build_pdf_notes(
 
     if not logos["main logo"] is None:
         pandoc_settings["metadata"]["main-logo"] = escape_path(str(logos["main logo"]["pdf"]))
+        if operating_system == Platform.WINDOWS:
+            pandoc_settings["metadata"]["main-logo"] = pandoc_settings["metadata"]["main-logo"].replace("\\", "/").replace("//", "/")
     if not logos["footer logo"] is None:
         pandoc_settings["metadata"]["footer-logo"] = escape_path(str(logos["footer logo"]["pdf"]))
+        if operating_system == Platform.WINDOWS:
+            pandoc_settings["metadata"]["footer-logo"] = pandoc_settings["metadata"]["footer-logo"].replace("\\", "/").replace("//", "/")
 
     pandoc_settings["filters"] = gather_filters(
         settings["general"]["filters"]
@@ -813,8 +817,12 @@ def build_pdf_slides(
 
     if not logos["main logo"] is None:
         pandoc_settings["metadata"]["main-logo"] = escape_path(str(logos["main logo"]["pdf"]))
+        if operating_system == Platform.WINDOWS:
+            pandoc_settings["metadata"]["main-logo"] = pandoc_settings["metadata"]["main-logo"].replace("\\", "/")
     if not logos["footer logo"] is None:
         pandoc_settings["metadata"]["footer-logo"] = escape_path(str(logos["footer logo"]["pdf"]))
+        if operating_system == Platform.WINDOWS:
+            pandoc_settings["metadata"]["footer-logo"] = pandoc_settings["metadata"]["footer-logo"].replace("\\", "/")
 
     pandoc_settings["filters"] = gather_filters(
         settings["general"]["filters"]
@@ -939,8 +947,12 @@ def build_web_notes(
 
     if not logos["main logo"] is None:
         pandoc_settings["metadata"]["main-logo"] = escape_path(str(logos["main logo"]["web"]))
+        if operating_system == Platform.WINDOWS:
+            pandoc_settings["metadata"]["main-logo"] = pandoc_settings["metadata"]["main-logo"].replace("\\", "/").replace("//", "/")
     if not logos["footer logo"] is None:
         pandoc_settings["metadata"]["footer-logo"] = escape_path(str(logos["footer logo"]["web"]))
+        if operating_system == Platform.WINDOWS:
+            pandoc_settings["metadata"]["footer-logo"] = pandoc_settings["metadata"]["footer-logo"].replace("\\", "/").replace("//", "/")
 
     pandoc_settings["filters"] = gather_filters(
         settings["general"]["filters"]
