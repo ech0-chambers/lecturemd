@@ -136,7 +136,7 @@ replacements = {
             (r"(\(|\{)\s+", r"\1"),
             # remove par breaks at start and end of environments and macros
             (r"\\begin{(.*?)}\s*", r"\\begin{\1}"),
-            (r"\s*\\end{(.*?)}", r"\\end{\1}"),
+            (r"^\s*\\end{(.*?)}", r"\\end{\1}"),
             (r"\{\s+\n\n\s*", r"{ "),
             (r"\{\n\n\s*", r"{"),
             (r"\s*\n\n\s+\}", r" }"),
@@ -168,12 +168,14 @@ replacements = {
     "html": {
         "all": [
             # Remove extra spaces before punctuation
-            (r"([>\)])\s+(\W)", r"\1\2"),
+            (r"([>\)])\s+([^\w<\(])", r"\1\2"),
             # Remove extra spacing around math
             (r"(\W)\s+\\\(", r"\1\\("),
-            (r"\\\)\s+(\W)", r"\\)\1"),
+            (r"\\\)\s+([^\w<])", r"\\)\1"),
             # Remove extra spaces between number and punctuation
             (r"(\d)\s+([\.,\?])", r"\1\2"),
+            # Remove extra space after open parenthesis
+            (r"\(\s+<", r"(<"),
         ],
         "notes": [],
         "slides": [],
@@ -587,7 +589,7 @@ def run_latexmk(tex_file: Path) -> None:
         If latexmk fails to run.
     """    
     result = subprocess.run(
-        ["latexmk", "-pdf", "-cd", "-f", "-interaction=nonstopmode", tex_file],
+        ["latexmk", "-pdf", "-cd", "-f", "-interaction=nonstopmode", "-halt-on-error", tex_file],
         capture_output=True,
     )
     if result.returncode != 0:
