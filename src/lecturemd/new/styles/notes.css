@@ -473,3 +473,70 @@
   }
   
   
+table {
+  margin: auto;
+  border-collapse: collapse;
+  margin-block: 2em;
+  border: 1px solid var(--clr-foreground);
+}
+
+.tcolorbox table {
+  border: none;
+}
+
+th, td{
+  border: 1px solid var(--clr-foreground);
+  color: var(--clr-foreground);
+}
+
+td {
+  border-top: none;
+  border-bottom: none;
+}
+
+.tcolorbox th, .tcolorbox td {
+  border: none;
+}
+
+.tcolorbox th:not(:first-child), .tcolorbox td:not(:first-child) {
+  border-left: 1px solid var(--clr-accent1-4);
+}
+
+th, td {
+  padding: 0.75ch;
+  padding-inline: 1.5em;
+}
+
+th {
+  font-variant: small-caps;
+  background-color: var(--clr-accent1);
+  color: var(--clr-background);
+}
+
+.tcolorbox th {
+  background-color: var(--clr-accent1-4);
+  color: var(--clr-foreground);
+}
+
+tr:nth-child(2n) {
+  background-color: var(--clr-background);
+}
+tr:nth-child(2n+1) {
+  background-color: var(--clr-surface6);
+}
+
+.tcolorbox tr:nth-child(2n) {
+  background-color: var(--clr-background-5);
+}
+.tcolorbox tr:nth-child(2n+1) {
+  background-color: var(--clr-surface6);
+}
+
+th .MathJax {
+  font-variant: none;
+  color: var(--clr-background);
+}
+
+.tcolorbox th .MathJax {
+  color: var(--clr-foreground);
+}

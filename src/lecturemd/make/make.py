@@ -184,6 +184,34 @@ replacements = {
 }
 
 
+def convert_tables(file_content: str) -> str:
+    # identify the longtable environments output by pandoc and convert them into a `nicetable` environment. Might use tabularray instead at some point.
+    matches = re.finditer(r"\\begin\{longtable\}\[(?P<options>.*?)\]\{(?P<column_spec>.*?)\}\n(?P<contents>.*?)\\end\{longtable\}", file_content, re.DOTALL)
+    matches = list(matches)
+    if len(matches) == 0:
+        return file_content
+    
+    for match in matches:
+        column_spec = match.group("column_spec")
+        contents = match.group("contents")
+
+        # remove any non-alpha characters from the column spec
+        column_spec = re.sub(r"[^a-zA-Z]", "", column_spec)
+        column_spec = column_spec.replace("l", "c").replace("r", "c") # pandoc defaults everything to left aligned. I'm defaulting to centre aligned. It's a shame there isn't a better way to control this per table.
+        contents = re.sub(r"\\toprule\\noalign{}\s*", "", contents)
+        contents = re.sub(r"\\midrule\\noalign{}\s*", "", contents)
+        contents = re.sub(r"\\bottomrule\\noalign{}\s*", "", contents)
+        contents = re.sub(r"\\endfirsthead\s*", "", contents)
+        contents = re.sub(r"\\endhead\s*", "", contents)
+        contents = re.sub(r"\\endfoot\s*", "", contents)
+        contents = re.sub(r"\\endlastfoot\s*", "", contents)
+        contents = contents.rstrip().rstrip("\\\\") # nicetable expects there to be no trailing \\ on the last line
+        column_spec = "|" + "|".join(list(column_spec)) + "|"
+        nicetable = f"\\begin{{nicetable}}{{{column_spec}}}\n{contents}\\end{{nicetable}}"
+        file_content = file_content.replace(match.group(0), nicetable)
+
+    return file_content
+
 def parse_args():
     # python3 make.py --keep-temp|-k web|pdf [notes|slides|chunked]
     parser = argparse.ArgumentParser(description="Build a lecturemd project")
@@ -750,6 +778,8 @@ def build_pdf_notes(
     for replacement in replacements["latex"]["notes"]:
         content = re.sub(replacement[0], replacement[1], content)
 
+    content = convert_tables(content)
+
     with open(tex_file, "w+") as f:
         f.write(content)
 
@@ -852,6 +882,8 @@ def build_pdf_slides(
 
     for replacement in replacements["latex"]["slides"]:
         content = re.sub(replacement[0], replacement[1], content)
+
+    content = convert_tables(content)
 
     with open(tex_file, "w+") as f:
         f.write(content)

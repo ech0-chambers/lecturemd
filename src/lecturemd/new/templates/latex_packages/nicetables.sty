@@ -80,7 +80,10 @@
     column~separation .initial:n = {1em},
     remove~outer~column~separators .bool_set:N = \l_nicetable_remove_outer_column_separators_bool,
     remove~outer~column~separators .initial:n = false,
-    remove~outer~column~separators .default:n = true
+    remove~outer~column~separators .default:n = true,
+    pauses .bool_set:N = \l_nicetable_pauses_bool,
+    pauses .initial:n = false,
+    pauses .default:n = true,
 }
 
 \newcommand{\nicetableset}[1]{
@@ -195,7 +198,7 @@
             % NON HEADER ROW     
             \int_compare:nNnTF {\l_nicetable_num_rows_int} > {##1} {
                 % NOT LAST ROW
-                \parse_nicetable_row:n {##2} \\
+                \parse_nicetable_row:n {##2} \bool_if:NT \l_nicetable_pauses_bool {\pause} \\
                 \bool_if:NTF \l_nicetable_row_separator_bool {
                     \hline
                 } {
@@ -209,7 +212,7 @@
             % HEADER ROW
             \int_compare:nNnTF {\l_nicetable_num_rows_int} > {##1} {
                 % NOT LAST ROW
-                \parse_nicetable_header_row:n {##2} \\
+                \parse_nicetable_header_row:n {##2} \bool_if:NT \l_nicetable_pauses_bool {\pause} \\
                 \bool_if:NTF \l_nicetable_row_separator_bool {
                     \hline
                 } {}

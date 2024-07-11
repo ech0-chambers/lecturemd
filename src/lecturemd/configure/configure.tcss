@@ -10,6 +10,10 @@ Screen {
     }
 }
 
+* {
+    transition: background 200ms;
+}
+
 Collapsible {
     height: auto;
     content-align: left top;
@@ -120,6 +124,10 @@ Horizontal.field {
             border: round $clr-accent1;
         }
     }
+}
+
+OptionList * {
+    transition: background 200ms;
 }
 
 OptionList > .option-list--option-hover {
@@ -395,4 +403,60 @@ Button.remove {
             color: $clr-blue-4;
         }
     }
+}
+
+ConfirmationScreen {
+    background: #0C355E20;
+    align: center middle;
+    & > Container {
+        width: 50;
+        height: auto;
+        padding: 1 2;
+        background: $clr-background;
+        & > Horizontal {
+            width: 100%;
+            height: auto;
+            & Button.success {
+                background: $clr-success-3;
+                border-top: tall $clr-success-4;
+                border-bottom: tall $clr-success;
+                outline-left: tall $clr-success-3;
+                outline-right: tall $clr-success-3;
+                padding: 0;
+                margin: 0;
+                height: 3;
+                width: 0.5fr;
+                &:hover {
+                    background: $clr-success;
+                    border-top: tall $clr-success-3;
+                    border-bottom: tall $clr-success-2;
+                    border-left: tall $clr-success;
+                    border-right: tall $clr-success;
+                }
+            }
+            & Button.warning {
+                background: $clr-warning-3;
+                border-top: tall $clr-warning-4;
+                border-bottom: tall $clr-warning;
+                outline-left: tall $clr-warning-3;
+                outline-right: tall $clr-warning-3;
+                padding: 0;
+                margin: 0;
+                height: 3;
+                width: 0.5fr;
+                &:hover {
+                    background: $clr-warning;
+                    border-top: tall $clr-warning-3;
+                    border-bottom: tall $clr-warning-2;
+                    border-left: tall $clr-warning;
+                    border-right: tall $clr-warning;
+                }
+            }
+        }
+    }
+}
+
+Label.title {
+    color: $clr-blue;
+    text-style: bold;
 }

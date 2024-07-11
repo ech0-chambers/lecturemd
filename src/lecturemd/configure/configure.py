@@ -21,6 +21,7 @@ from textual.containers import (
     Container,
     Center,
 )
+from textual.screen import ModalScreen
 
 from typing import Callable, List, Tuple
 from pathlib import Path
@@ -32,6 +33,21 @@ from copy import deepcopy
 
 base_dir = Path(".").resolve()
 
+
+class ConfirmationScreen(ModalScreen):
+    
+    def compose(self):
+        with Container():
+            yield Label("Are you sure?", classes = "title")
+            yield Markdown("This will discard all changes you have made this session and exit the configuration app.")
+            with Horizontal():
+                yield Button("Cancel", id = "modal_cancel", classes = "success")
+                yield Button("Yes", id = "modal_yes", classes = "warning")
+
+
+    @on(Button.Pressed)
+    def handle_button(self, message):
+        self.dismiss(message.button.id)
 
 def read_settings(base_dir: Path) -> dict:
     settings_path = base_dir / ".lecturemd/lecturemd.yaml"
@@ -1491,11 +1507,15 @@ class ConfigurationApp(App):
         self.exit()
 
     @on(Button.Pressed, "#discard_and_exit")
-    def discard_and_exit(self, message):
+    def discard_and_exit_pressed(self, message):
+        self.push_screen(ConfirmationScreen(), self.maybe_discard_and_exit)
+
+    def maybe_discard_and_exit(self, response: str):
         global settings
-        del settings
-        settings = deepcopy(original_settings)
-        self.exit()
+        if response == "modal_yes":
+            del settings
+            settings = deepcopy(original_settings)
+            self.exit()
 
 
 def main():
