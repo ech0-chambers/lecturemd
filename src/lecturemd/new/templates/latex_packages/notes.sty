@@ -13,6 +13,10 @@ $-- (For syntax highlighting)
 \newlecturebox{name = example,       base color = Green,   title prefix = Example, numbered}
 \newlecturebox{name = aside,        base color = Magenta, title prefix = Aside}
 
+\newcounter{examplesolutionpartcounter}
+\newcounter{examplesolutionsubpartcounter}
+\setcounter{examplesolutionpartcounter}{0}
+\setcounter{examplesolutionsubpartcounter}{0}
 
 \def\examplesolution{\tcblower\setcounter{examplesolutionpartcounter}{0}}%
 \def\examplesolutionpart{\stepcounter{examplesolutionpartcounter}\tcbsubtitle{Part~\textbf{(\alph{examplesolutionpartcounter})}}}%

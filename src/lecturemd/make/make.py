@@ -155,12 +155,17 @@ replacements = {
         ],
         "notes": [],
         "slides": [
+            # we should always have \begin{example}\begin{frame}...\end{frame}\end{example}, not \begin{frame}\begin{example}...\end{example}\end{frame}
+            (r"\\begin{frame}\s*\\begin{(example|aside)}(\[.*?\])?", r"\\begin{\1}\2\n\\begin{frame}"),
+            (r"\\end{(example|aside)}\s*\\end{frame}", r"\\end{frame}\n\\end{\1}"),
+            # We should also have \end{frame}\examplesolution, not \examplesolution\end{frame}
+            (r"\\examplesolution(\w*)?\s*\\end{frame}", r"\\end{frame}\n\\examplesolution\1"),
             # If an \item is a display equation, remove the bullet point
             (r"\\item\s*(?=(\\begin{equation}|\{?\\\[))", r"\\item[]"),
             # Remove the automatically added frametitles
             (r"\\begin{frame}((\[.*?\])?){(.*?)}", r"\\begin{frame}\1"),
             # add a \pause to the start of each frame
-            (r"\\begin{frame}((\[.*?\])?)", r"\\begin{frame}\1\n\t\\pause"),
+            (r"\\begin{frame}((\[.*?\])?)", r"\\begin{frame}\1\n\t\\pause\n\t"),
             # Remove `fragile` frame options
             (r"\\begin{frame}\[fragile\]", r"\\begin{frame}"),
         ],
@@ -197,7 +202,6 @@ def convert_tables(file_content: str) -> str:
 
         # remove any non-alpha characters from the column spec
         column_spec = re.sub(r"[^a-zA-Z]", "", column_spec)
-        column_spec = column_spec.replace("l", "c").replace("r", "c") # pandoc defaults everything to left aligned. I'm defaulting to centre aligned. It's a shame there isn't a better way to control this per table.
         contents = re.sub(r"\\toprule\\noalign{}\s*", "", contents)
         contents = re.sub(r"\\midrule\\noalign{}\s*", "", contents)
         contents = re.sub(r"\\bottomrule\\noalign{}\s*", "", contents)

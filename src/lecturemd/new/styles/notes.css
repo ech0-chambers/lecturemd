@@ -546,3 +546,10 @@ th .MathJax {
 .tcolorbox th .MathJax {
   color: var(--clr-foreground);
 }
+
+.example-solution-divider {
+  width: 80%;
+  margin: auto;
+  height: 0;
+  border-bottom: 2px solid var(--clr-green);
+}

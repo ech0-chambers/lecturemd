@@ -12,13 +12,18 @@ $-- (For syntax highlighting)
 
 \let\unmodified@beamer@framenotesbegin\beamer@framenotesbegin
 \newenvironment{aside}[1][]{
-    \def\exampletitle{#1}%
-    \def\beamer@framenotesbegin{\frametitle{Aside: \exampletitle}\unmodified@beamer@framenotesbegin}%
+    \def\asidetitle{#1}%
+    \def\beamer@framenotesbegin{\frametitle{Aside: \asidetitle}\unmodified@beamer@framenotesbegin}%
     \relax
 }{
     \let\beamer@framenotesbegin\unmodified@beamer@framenotesbegin
     \relax
 }
+
+\newcounter{examplesolutionpartcounter}
+\newcounter{examplesolutionsubpartcounter}
+\setcounter{examplesolutionpartcounter}{0}
+\setcounter{examplesolutionsubpartcounter}{0}
 
 \let\unmodified@beamer@framenotesbegin\beamer@framenotesbegin
 \renewenvironment{example}[1][]{
