@@ -213,13 +213,19 @@ def convert_tables(file_content: str) -> str:
     return file_content
 
 def parse_args():
-    # python3 make.py --keep-temp|-k web|pdf [notes|slides|chunked]
+    # python3 make.py --keep-temp|-k --log-level=debug|info|warning|error|critical web|pdf [notes|slides|chunked]
     parser = argparse.ArgumentParser(description="Build a lecturemd project")
     parser.add_argument(
         "--keep-temp",
         "-k",
         action="store_true",
         help="Keep temporary files after building.",
+    )
+    parser.add_argument(
+        "--log-level",
+        choices=["debug", "info", "warning", "error", "critical"],
+        default="debug",
+        help="Set the log level.",
     )
     parser.add_argument("output", choices=["web", "pdf", "all"], help="Output format.")
     parser.add_argument(
@@ -527,6 +533,8 @@ def sanitize_filename(filename: str) -> str:
 def resolve_filter_path(file_path: str) -> str:
     """Resolve the path of a filter file. Files which start `$lecturemd` are resolved relative to the filter directory in the lecturemd package, not the current working directory.
 
+    **Note:** pandoc-crossref is a special case. The filter path `$lecturemd/pandoc-crossref` will be resolved to the correct executable based on the operating system.
+
     Parameters
     ----------
     file_path : str
@@ -545,6 +553,14 @@ def resolve_filter_path(file_path: str) -> str:
         If the filter file is not a file.
     """    
     filter_dir = Path(__file__).parent / "filters"
+    if file_path == "$lecturemd/pandoc-crossref":
+        if operating_system == Platform.WINDOWS:
+            return str(filter_dir / "pandoc-crossref.exe")
+        if operating_system == Platform.MAC:
+            return str(filter_dir / "pandoc-crossref-mac")
+        if operating_system == Platform.LINUX:
+            return str(filter_dir / "pandoc-crossref")
+        raise FileNotFoundError("Unsupported or unknown operating system - could not resolve pandoc-crossref path")
     if file_path.startswith("$lecturemd"):
         filter_file = filter_dir / file_path[len("$lecturemd/") :]
         filter_file = filter_file.resolve().absolute()
@@ -561,7 +577,7 @@ def resolve_filter_path(file_path: str) -> str:
     return file_path
 
 
-def run_pandoc(input_file: str, defaults_file: Path, use_pyndoc: Optional[bool] = False) -> None:
+def run_pandoc(input_file: str, defaults_file: Path, use_pyndoc: Optional[bool] = False, logging_level: str = "DEBUG") -> None:
     """Run pandoc (or pyndoc) to convert a file using the specified defaults file.
 
     Parameters
@@ -587,6 +603,8 @@ def run_pandoc(input_file: str, defaults_file: Path, use_pyndoc: Optional[bool] 
                 executable,
                 "-m",
                 "pyndoc",
+                "--log-level",
+                logging_level.lower(),
                 "--preprocess",
                 "--defaults",
                 defaults_file,
@@ -679,7 +697,7 @@ def write_crossref() -> Path:
 
 
 def build_pdf_notes(
-    base_dir: Path, build_dir: Path, settings: dict, logos: dict
+    base_dir: Path, build_dir: Path, settings: dict, logos: dict, logging_level: str = "DEBUG"
 ) -> None:
     """Build the PDF notes from the settings and logos.
 
@@ -765,6 +783,7 @@ def build_pdf_notes(
         settings["general"]["main file"],
         defaults_file,
         settings["general"]["use pyndoc"],
+        logging_level
     )
 
     with open(tex_file, "r") as f:
@@ -787,7 +806,7 @@ def build_pdf_notes(
 
 
 def build_pdf_slides(
-    base_dir: Path, build_dir: Path, settings: dict, logos: dict
+    base_dir: Path, build_dir: Path, settings: dict, logos: dict, logging_level: str = "DEBUG"
 ) -> None:
     """Build the PDF slides from the settings and logos.
 
@@ -872,6 +891,7 @@ def build_pdf_slides(
         settings["general"]["main file"],
         defaults_file,
         settings["general"]["use pyndoc"],
+        logging_level
     )
 
     with open(tex_file, "r") as f:
@@ -900,7 +920,7 @@ def build_pdf_slides(
 
 
 def build_web_notes(
-    base_dir: Path, build_dir: Path, settings: dict, logos: dict
+    base_dir: Path, build_dir: Path, settings: dict, logos: dict, logging_level: str = "DEBUG"
 ) -> None:
     """Build the web notes from the settings and logos.
 
@@ -1004,6 +1024,7 @@ def build_web_notes(
         settings["general"]["main file"],
         defaults_file,
         settings["general"]["use pyndoc"],
+        logging_level
     )
 
     with open(html_file, "r") as f:
@@ -1020,7 +1041,7 @@ def build_web_notes(
 
 
 def build_web_slides(
-    base_dir: Path, build_dir: Path, settings: dict, logos: dict
+    base_dir: Path, build_dir: Path, settings: dict, logos: dict, logging_level: str = "DEBUG"
 ) -> None:
     """Build the web slides from the settings and logos.
 
@@ -1121,6 +1142,7 @@ def build_web_slides(
         settings["general"]["main file"],
         defaults_file,
         settings["general"]["use pyndoc"],
+        logging_level
     )
 
     with open(html_file, "r") as f:
@@ -1137,7 +1159,7 @@ def build_web_slides(
 
 
 def build_web_chunked(
-    base_dir: Path, build_dir: Path, settings: dict, logos: dict
+    base_dir: Path, build_dir: Path, settings: dict, logos: dict, logging_level: str = "DEBUG"
 ) -> None:
     """Build the web chunked output from the settings and logos.
 
@@ -1244,6 +1266,7 @@ def build_web_chunked(
         settings["general"]["main file"],
         defaults_file,
         settings["general"]["use pyndoc"],
+        logging_level
     )
 
     # copy the `build/styles` directory into the html_file directory
@@ -1296,6 +1319,7 @@ def main(
     output: str,
     format: str | None,
     keep_temp: bool = False,
+    logging_level: str = "debug",
 ):
     build_dir: Path = base_dir / "build"
     styles_dir = build_dir / "styles"
@@ -1317,20 +1341,20 @@ def main(
         if output in ["pdf", "all"]:
             if format is None or format == "notes":
                 with TimedBuild(progress, "PDF notes"):
-                    build_pdf_notes(base_dir, build_dir, settings, logos)
+                    build_pdf_notes(base_dir, build_dir, settings, logos, logging_level)
             if format is None or format == "slides":
                 with TimedBuild(progress, "PDF slides"):
-                    build_pdf_slides(base_dir, build_dir, settings, logos)
+                    build_pdf_slides(base_dir, build_dir, settings, logos, logging_level)
         if output in ["web", "all"]:
             if format is None or format == "notes":
                 with TimedBuild(progress, "Web notes"):
-                    build_web_notes(base_dir, build_dir, settings, logos)
+                    build_web_notes(base_dir, build_dir, settings, logos, logging_level)
             if format is None or format == "slides":
                 with TimedBuild(progress, "Web slides"):
-                    build_web_slides(base_dir, build_dir, settings, logos)
+                    build_web_slides(base_dir, build_dir, settings, logos, logging_level)
             if format is None or format == "chunked":
                 with TimedBuild(progress, "Web chunked notes"):
-                    build_web_chunked(base_dir, build_dir, settings, logos)
+                    build_web_chunked(base_dir, build_dir, settings, logos, logging_level)
     # remove any log files we generated. filter.log, pyndoc.*.log
     if not keep_temp:
         for file in base_dir.glob("filter.log"):
@@ -1343,4 +1367,4 @@ def main(
 
 if __name__ == "__main__":
     args = parse_args()
-    main(args.output, args.format)
+    main(args.output, args.format, args.logging_level)

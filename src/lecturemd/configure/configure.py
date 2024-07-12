@@ -23,6 +23,7 @@ from textual.containers import (
 )
 from textual.screen import ModalScreen
 
+
 from typing import Callable, List, Tuple
 from pathlib import Path
 
@@ -39,7 +40,7 @@ class ConfirmationScreen(ModalScreen):
     def compose(self):
         with Container():
             yield Label("Are you sure?", classes = "title")
-            yield Markdown("This will discard all changes you have made this session and exit the configuration app.")
+            yield Markdown("This will discard all changes you have made this session (*including those you've saved!*) and exit the configuration app.")
             with Horizontal():
                 yield Button("Cancel", id = "modal_cancel", classes = "success")
                 yield Button("Yes", id = "modal_yes", classes = "warning")
@@ -981,7 +982,11 @@ class ConfigurationApp(App):
 
     CSS = read_css(["ncl.tcss", "configure.tcss"])
 
-    BINDINGS = []
+    BINDINGS = [
+        ("ctrl+s", "save", "Save Changes"),
+        ("ctrl+e", "save_and_exit", "Save and Exit"),
+        ("ctrl+d", "discard_and_exit", "Discard and Exit")
+    ]
 
     def compose(self) -> ComposeResult:
         """Compose app with tabbed content."""
@@ -1501,6 +1506,16 @@ class ConfigurationApp(App):
         if id == "html-slides-preambles-add-button":
             self.handle_add_preamble(id, "html-slides", ["html", "slides", "preamble"])
             return
+
+    def action_save(self):
+        write_settings(base_dir, settings)
+        self.notify("Changes have been saved", title = "Saved", severity="information", timeout = 2)
+
+    def action_save_and_exit(self):
+        self.exit()
+
+    def action_discard_and_exit(self):
+        self.discard_and_exit_pressed("")
 
     @on(Button.Pressed, "#save_and_exit")
     def save_and_exit(self, message):

@@ -1,43 +1,47 @@
-p {
+.maths-preamble {
+    display: none;
+  }
+  
+  p {
     line-height: 1.675rem;
     text-indent: 1cm;
     text-align: justify;
     margin-block: 1.75rem;
-}
-
-li {
+  }
+  
+  li {
     text-align: justify;
     list-style-type: square;
     font-weight: 300;
-}
-
-li::marker {
+  }
+  
+  li::marker {
     color: var(--clr-accent2);
     font-size: 1.5em;
-}
-
-li:has(span.display) {
+  }
+  
+  li:has(span.display) {
     list-style-type: none;
-}
-
-li li::marker {
+  }
+  
+  li li::marker {
     color: var(--clr-accent2-3);
     content: "▶";
     font-size: 1rem;
-}
-
-li li {
+  }
+  
+  li li {
     padding-left: 1ch;
-}
-
-:root {
+  }
+  
+  :root {
     --r-background-color: var(--clr-background);
-    --r-main-font: 'Fira Sans', Helvetica, sans-serif;
+    --r-main-font: "Fira Sans", Helvetica, sans-serif;
     --r-main-font-size: 24px;
     --r-main-color: var(--clr-foreground);
     --r-block-margin: 20px;
     --r-heading-margin: 0 0 20px 0;
-    --r-heading-font: 'Fira Sans', Helvetica, sans-serif;
+    --r-heading-font: "Fira Sans", Helvetica, sans-serif;
     --r-heading-color: var(--clr-foreground);
     --r-heading-line-height: 1.2;
     --r-heading-letter-spacing: normal;
@@ -61,37 +65,37 @@ li li {
     --tcolorbox-title-separator: 2ch;
     --tcolorbox-inner-padding: 1em;
   }
-
-.reveal .slides{
+  
+  .reveal .slides {
     text-align: justify;
-}
-
-span.math {
+  }
+  
+  span.math {
     color: var(--clr-accent1);
     text-align: center;
     font-weight: 100;
-}
-
-div.note > p,
-span.note {
+  }
+  
+  div.note > p,
+  span.note {
     font-style: italic;
     color: var(--clr-foreground);
-}
-
-div.note > p::before,
-span.note::before {
+  }
+  
+  div.note > p::before,
+  span.note::before {
     content: "Note: ";
     font-weight: 400;
     font-style: italic;
     color: var(--clr-red);
     display: inline;
-}
-
-.tcolorbox.definition {
+  }
+  
+  .tcolorbox.definition {
     --tcolorbox-main-color: var(--clr-blue);
-}
-
-.tcolorbox {
+  }
+  
+  .tcolorbox {
     border-width: var(--tcolorbox-border-width);
     border-style: solid;
     border-color: var(--tcolorbox-main-color);
@@ -102,72 +106,141 @@ span.note::before {
     color: var(--clr-foreground);
     padding-inline: var(--tcolorbox-inner-padding);
     padding-block-end: 1em;
-}
-
-.tcolorbox > div.title {
+    font-weight: 300;
+  }
+  
+  .tcolorbox > div.title {
     background-color: var(--tcolorbox-main-color);
     color: var(--clr-background);
     font-weight: 600;
-    width: calc(100% + 2 * var(--tcolorbox-border-width) + 2 * var(--tcolorbox-inner-padding));
-    margin-left: calc(-1*var(--tcolorbox-border-width) - var(--tcolorbox-inner-padding));
-    margin-top: calc(-1*var(--tcolorbox-border-width));
+    width: calc(
+      100% + 2 * var(--tcolorbox-border-width) + 2 *
+        var(--tcolorbox-inner-padding)
+    );
+    margin-left: calc(
+      -1 * var(--tcolorbox-border-width) - var(--tcolorbox-inner-padding)
+    );
+    margin-top: calc(-1 * var(--tcolorbox-border-width));
     border-top-left-radius: var(--tcolorbox-border-radius);
     border-top-right-radius: var(--tcolorbox-border-radius);
-}
-
-.tcolorbox > div.title > p {
+  }
+  
+  .tcolorbox > div.title > p {
     margin-block-start: 0;
     padding-block: 0.25em;
     text-indent: 0;
-}
-
-.tcolorbox > div.title > p::before {
+  }
+  
+  .tcolorbox > div.title > p::before {
     content: "";
     font-weight: 600;
     color: var(--clr-background);
     padding-right: var(--tcolorbox-title-separator);
     margin-left: 1.25em;
-}
-
-.tcolorbox.example > div.title > p::before {
+  }
+  
+  .tcolorbox.example > div.title > p::before {
     counter-increment: exmapleCounter;
     content: "Example " counter(exmapleCounter) ": ";
-}
-
-.tcolorbox.definition > div.title > p::before {
+  }
+  
+  .tcolorbox.definition > div.title > p::before {
     content: "Definition: ";
-}
-
-.tcolorbox.aside > div.title > p::before {
+  }
+  
+  .tcolorbox.aside > div.title > p::before {
     content: "Aside: ";
-}
-
-.latex-macro.emphasis{
+  }
+  
+  .latex-macro.emphasis {
     font-style: italic;
     font-weight: 400;
     color: var(--clr-cyan);
-}
-
-h1, h2, h3, h4 {
+  }
+  
+  h1,
+  h2,
+  h3,
+  h4 {
     text-align: center;
-}
-
-
-
-figure {
+  }
+  
+  figure {
     display: flex;
     flex-direction: column;
-}
-
-figure > img,
-figure > figcaption {
+  }
+  
+  figure > img,
+  figure > figcaption {
     margin-inline: auto !important;
-}
-
-figure > img {
+  }
+  
+  figure > img {
     background-color: var(--clr-surface6);
     border-radius: 0.5em;
     box-shadow: 5px 5px 15px 10px var(--clr-background-5);
     margin-bottom: 2em;
     padding: 1ch;
-}
+  }
+  
+  .reveal table,
+  .reveal table tr,
+  .reveal table th,
+  .reveal table td {
+    border: none;
+  }
+  
+  .reveal table {
+    margin: auto;
+    border-collapse: collapse;
+    margin-block: 2em;
+    border: none;
+    text-align: center;
+  }
+  
+  .reveal table th,
+  .reveal table td {
+    color: var(--clr-foreground);
+  }
+  
+  .reveal table th,
+  .reveal table td {
+    border: none;
+    padding: 0.25ch;
+    padding-inline: 1.5em;
+    text-align: center;
+  }
+  
+  .reveal table th:not(:first-child),
+  .reveal table td:not(:first-child) {
+    border-left: 1px solid var(--clr-accent1-4);
+  }
+  
+  .reveal table th {
+    font-variant: small-caps;
+    background-color: var(--clr-accent1-4);
+    color: var(--clr-foreground);
+  }
+  
+  .reveal table tr:nth-child(2n) {
+    background-color: var(--clr-background-5);
+  }
+  .reveal table tr:nth-child(2n + 1) {
+    background-color: var(--clr-surface6);
+  }
+  
+  .reveal table th .MathJax {
+    color: var(--clr-foreground);
+    font-variant: normal;
+  }
+  
+  svg.leader-line {
+    z-index: 10;
+  }
+  
+  Section .center,
+  Section .center > p {
+    text-align: center;
+    margin-block: 2em;
+  }
+  

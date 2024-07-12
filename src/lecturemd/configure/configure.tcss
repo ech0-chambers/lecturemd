@@ -426,7 +426,8 @@ ConfirmationScreen {
                 margin: 0;
                 height: 3;
                 width: 0.5fr;
-                &:hover {
+                &:hover,
+                &:focus {
                     background: $clr-success;
                     border-top: tall $clr-success-3;
                     border-bottom: tall $clr-success-2;
@@ -444,7 +445,8 @@ ConfirmationScreen {
                 margin: 0;
                 height: 3;
                 width: 0.5fr;
-                &:hover {
+                &:hover,
+                &:focus {
                     background: $clr-warning;
                     border-top: tall $clr-warning-3;
                     border-bottom: tall $clr-warning-2;
@@ -459,4 +461,21 @@ ConfirmationScreen {
 Label.title {
     color: $clr-blue;
     text-style: bold;
+}
+
+ToastRack {
+        align: right top;
+}
+
+Toast {
+    background: $clr-success-5;
+    &.-information {
+        border-left: outer $clr-success;
+        border-right: outer $clr-success-5;
+        color: $clr-foreground;
+    }
+    & .toast--title {
+        color: $clr-success-2;
+        text-style: bold;
+    }
 }
