@@ -181,12 +181,20 @@ replacements = {
             (r"(\d)\s+([\.,\?])", r"\1\2"),
             # Remove extra space after open parenthesis
             (r"\(\s+<", r"(<"),
+            # Remove colgroup from tables
+            (r"<colgroup>.*?</colgroup>", "", re.DOTALL),
         ],
         "notes": [],
         "slides": [],
         "chunked": [],
     },
 }
+
+
+def apply_replacements(content: str, replacements: List) -> str:
+    for replacement in replacements:
+        content = re.sub(replacement[0], replacement[1], content, **({} if len(replacement) == 2 else {"flags": replacement[2]}))
+    return content
 
 
 def convert_tables(file_content: str) -> str:
@@ -215,6 +223,24 @@ def convert_tables(file_content: str) -> str:
         file_content = file_content.replace(match.group(0), nicetable)
 
     return file_content
+
+
+def add_figure_cards(file_content: str) -> str:
+    # search for any figures, and convert `includgraphics` to `includegraphicscard` within those figures
+    matches = re.finditer(r"\\begin\{figure\}.*?\\end\{figure\}", file_content, re.DOTALL)
+    pattern = r"\\includegraphics(\[.*?\])?\{(.*?)\}"
+    replacement = r"\\includegraphicscard\1{\2}{padding = 2mm}"
+    for figure in matches:
+        file_content = file_content.replace(figure.group(0), re.sub(pattern, replacement, figure.group(0)))
+    return file_content
+
+def check_filter_executable(filter_file: Path):
+    # if we're on linux, check if the filter has execute permissions
+    if sys.platform == "linux":
+        if not filter_file.is_file():
+            raise FileNotFoundError("Filter file not found.")
+        if not filter_file.stat().st_mode & 0o111:
+            filter_file.chmod(0o755)
 
 def parse_args():
     # python3 make.py --keep-temp|-k --log-level=debug|info|warning|error|critical web|pdf [notes|slides|chunked]
@@ -773,6 +799,9 @@ def build_pdf_notes(
         + settings["latex"]["notes"]["filters"]
     )
 
+    for filter in pandoc_settings["filters"]:
+        check_filter_executable(Path(filter))
+
     crossref_file = write_crossref()
 
     pandoc_settings["metadata-files"] = [escape_path(str(crossref_file))]
@@ -795,13 +824,10 @@ def build_pdf_notes(
 
     # The default output from pandoc (and especially pandoc-crossref) has a few issues, so we correct them in post before running latexmk (This is why we don't directly call pandoc with pdf output).
 
-    for replacement in replacements["latex"]["all"]:
-        content = re.sub(replacement[0], replacement[1], content)
-
-    for replacement in replacements["latex"]["notes"]:
-        content = re.sub(replacement[0], replacement[1], content)
+    content = apply_replacements(content, replacements["latex"]["all"] + replacements["latex"]["notes"])
 
     content = convert_tables(content)
+    content = add_figure_cards(content)
 
     with open(tex_file, "w+") as f:
         f.write(content)
@@ -885,6 +911,9 @@ def build_pdf_slides(
         + settings["latex"]["slides"]["filters"]
     )
 
+    for filter in pandoc_settings["filters"]:
+        check_filter_executable(Path(filter))
+
     defaults_file = base_dir / ".lecturemd" / "defaults" / "pdf_slides.yaml"
     if not defaults_file.parent.exists():
         defaults_file.parent.mkdir(parents=True)
@@ -901,13 +930,10 @@ def build_pdf_slides(
     with open(tex_file, "r") as f:
         content = f.read()
 
-    for replacement in replacements["latex"]["all"]:
-        content = re.sub(replacement[0], replacement[1], content)
-
-    for replacement in replacements["latex"]["slides"]:
-        content = re.sub(replacement[0], replacement[1], content)
+    content = apply_replacements(content, replacements["latex"]["all"] + replacements["latex"]["slides"])
 
     content = convert_tables(content)
+    content = add_figure_cards(content)
 
     with open(tex_file, "w+") as f:
         f.write(content)
@@ -1018,6 +1044,9 @@ def build_web_notes(
         + settings["html"]["notes"]["filters"]
     )
 
+    for filter in pandoc_settings["filters"]:
+        check_filter_executable(Path(filter))
+
     defaults_file = base_dir / ".lecturemd" / "defaults" / "web_notes.yaml"
     if not defaults_file.parent.exists():
         defaults_file.parent.mkdir(parents=True)
@@ -1034,11 +1063,7 @@ def build_web_notes(
     with open(html_file, "r") as f:
         content = f.read()
 
-    for replacement in replacements["html"]["all"]:
-        content = re.sub(replacement[0], replacement[1], content)
-
-    for replacement in replacements["html"]["notes"]:
-        content = re.sub(replacement[0], replacement[1], content)
+    content = apply_replacements(content, replacements["html"]["all"] + replacements["html"]["notes"])
 
     with open(html_file, "w+") as f:
         f.write(content)
@@ -1136,6 +1161,9 @@ def build_web_slides(
         + settings["html"]["slides"]["filters"]
     )
 
+    for filter in pandoc_settings["filters"]:
+        check_filter_executable(Path(filter))
+
     defaults_file = base_dir / ".lecturemd" / "defaults" / "web_slides.yaml"
     if not defaults_file.parent.exists():
         defaults_file.parent.mkdir(parents=True)
@@ -1152,11 +1180,7 @@ def build_web_slides(
     with open(html_file, "r") as f:
         content = f.read()
 
-    for replacement in replacements["html"]["all"]:
-        content = re.sub(replacement[0], replacement[1], content)
-
-    for replacement in replacements["html"]["slides"]:
-        content = re.sub(replacement[0], replacement[1], content)
+    content = apply_replacements(content, replacements["html"]["all"] + replacements["html"]["slides"])
 
     with open(html_file, "w+") as f:
         f.write(content)
@@ -1260,6 +1284,9 @@ def build_web_chunked(
         + settings["html"]["notes"]["filters"]
     )
 
+    for filter in pandoc_settings["filters"]:
+        check_filter_executable(Path(filter))
+
     defaults_file = base_dir / ".lecturemd" / "defaults" / "web_chunked.yaml"
     if not defaults_file.parent.exists():
         defaults_file.parent.mkdir(parents=True)
@@ -1289,11 +1316,7 @@ def build_web_chunked(
         with open(file, "r") as f:
             content = f.read()
 
-        for replacement in replacements["html"]["all"]:
-            content = re.sub(replacement[0], replacement[1], content)
-
-        for replacement in replacements["html"]["chunked"]:
-            content = re.sub(replacement[0], replacement[1], content)
+        content = apply_replacements(content, replacements["html"]["all"] + replacements["html"]["chunked"])
 
         with open(file, "w+") as f:
             f.write(content)

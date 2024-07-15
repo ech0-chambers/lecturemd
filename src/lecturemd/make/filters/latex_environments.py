@@ -36,6 +36,7 @@ def handle_macro(elem):
     if index + 1 >= len(elem.classes):
         return
     macro = elem.classes[index + 1]
+    macro = macro.replace("-", "")
     args = elem.attributes
     # Assume that the contents of the span is the final mandatory argument
     if 'args' in args:

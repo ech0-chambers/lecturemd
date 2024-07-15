@@ -12,14 +12,14 @@ A system for generating lecture notes and slides from a single markdown file, fo
 - [LaTeX](https://www.latex-project.org/), specifically `pdflatex`
 - [LaTeXmk](https://ctan.org/pkg/latexmk/?lang=en) 
 
-### Python Packages
+<!-- ### Python Packages
 
 - [Pygmentation](https://github.com/ech0-chambers/pygmentation)
 - [Pyndoc](https://github.com/ech0-chambers/pyndoc) (Not strictly required but highly recommended)
 - [Panflute](https://github.com/sergiocorreia/panflute)
 - [Pyaml](https://pyyaml.org/)
 - [Textual](https://github.com/Textualize/textual)
-- [Pint](https://pint.readthedocs.io/en/stable/)
+- [Pint](https://pint.readthedocs.io/en/stable/) -->
 
 ## Installation
 
@@ -42,31 +42,14 @@ A system for generating lecture notes and slides from a single markdown file, fo
     ```bash
     sudo apt install texlive-full
     ```
-1. Install Pyndoc by following the instructions in the [Pyndoc README](https://github.com/ech0-chambers/pyndoc/blob/main/README.md#installation).
-1. Install Pygmentation by following the instructions in the [Pygmentation README](https://github.com/ec0-chambers/pygmentation/blob/main/README.md#installation).
-1. Install this package
-    1. Download this repository and extract it.
-    1. Navigate to the extracted directory in your terminal. For example,
-        ```bash
-        cd ~/Downloads/lecturemd-main/lecturemd-main
-        ```
-    1. Navigate to the `src` directory
-        ```bash
-        cd src
-        ```
-    1. If you would like to, run
-        ```bash
-        python3 check_requirements.py
-        ```
-        to ensure that all required packages are installed and available.
-    1. Install the package with
-        ```bash
-        pip install .
-        ```
-    1. Verify the installation by running
-        ```bash
-        lecturemd --help
-        ```
+1. Install this package with
+    ```bash
+    pip install lecturemd
+    ```
+1. Verify the installation by running
+    ```bash
+    lecturemd --help
+    ```
 
 ### Windows
 
@@ -88,31 +71,15 @@ The recommended route for installing the requirements is to use the chocolatey p
     python --version
     ```
     The output should be the version of Python that you installed. If instead the Microsoft Store is opened, refer to step 5.
-1. Install Pyndoc by following the instructions in the [Pyndoc README](https://github.com/ech0-chambers/pyndoc/blob/main/README.md#installation).
-1. Install Pygmentation by following the instructions in the [Pygmentation README](https://github.com/ec0-chambers/pygmentation/blob/main/README.md#installation).
-1. Install this package
-    1. Download this repository and extract it.
-    1. Navigate to the extracted directory in your terminal. For example,
-        ```cmd
-        cd C:\Users\username\Downloads\lecturemd-main\lecturemd-main
-        ```
-    1. Navigate to the `src` directory
-        ```cmd
-        cd src
-        ```
-    1. If you would like to, run
-        ```cmd
-        python check_requirements.py
-        ```
-        to ensure that all required packages are installed and available.
-    1. Install the package with
-        ```cmd
-        pip install .
-        ```
-    1. Verify the installation by running
-        ```cmd
-        lecturemd --help
-        ```
+1. Install this package with
+    ```cmd
+    pip install lecturemd
+    ```
+1. Verify the installation by running
+    ```cmd
+    lecturemd --help
+    ```
+
 
 ### MacOS
 
@@ -169,4 +136,4 @@ To build only the slides in web format, run
 lecturemd build web slides
 ```
 
-See `lecturemd build --help` for more all options.
+See `lecturemd build --help` for all options.

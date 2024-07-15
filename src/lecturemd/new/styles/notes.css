@@ -477,6 +477,9 @@ body > mjx-container:first-child {
   text-align: center;
 }
 
+.center {
+  margin-block: 1.5em;
+}
 
 
 table {
