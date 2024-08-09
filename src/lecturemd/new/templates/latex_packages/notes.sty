@@ -129,9 +129,7 @@ $-- (For syntax highlighting)
 \fancyhead[r]{%
     \scshape\color{ForegroundColour_2}\@subtitle%
 }
-$if(footer-logo)$
-\fancyfoot[l]{\includegraphics[height=\logoheight]{$footer-logo$}$if(author)$\raisebox{\logoheight}{\raisebox{-\height}{\color{ForegroundColour_2}\scshape \ $author$}}$endif$}
-$endif$
+\fancyfoot[l]{$if(footer-logo)$\includegraphics[height=\logoheight]{$footer-logo$}$endif$$if(author)$\raisebox{\logoheight}{\raisebox{-\height}{\color{ForegroundColour_2}\scshape \ $author$}}$endif$}
 $if(institution)$
     \fancyfoot[r]{\raisebox{\logoheight}{\raisebox{-\height}{\color{ForegroundColour_2}\scshape $institution$}}}
 $endif$
@@ -146,9 +144,7 @@ $endif$
 \fancypagestyle{footeronly}{
     \fancyhead{} % clear all header fields
     \fancyfoot{} % clear all footer fields
-$if(footer-logo)$
-    \fancyfoot[l]{\includegraphics[height=\logoheight]{$footer-logo$}$if(author)$\raisebox{\logoheight}{\raisebox{-\height}{\color{ForegroundColour_2}\scshape \ $author$}}$endif$}
-$endif$
+    \fancyfoot[l]{$if(footer-logo)$\includegraphics[height=\logoheight]{$footer-logo$}$endif$$if(author)$\raisebox{\logoheight}{\raisebox{-\height}{\color{ForegroundColour_2}\scshape \ $author$}}$endif$}
 $if(institution)$
     \fancyfoot[r]{\raisebox{\logoheight}{\raisebox{-\height}{\color{ForegroundColour_2}\scshape $institution$}}}
 $endif$
