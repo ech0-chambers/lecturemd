@@ -651,7 +651,7 @@ def run_pandoc(input_file: str, defaults_file: Path, use_pyndoc: Optional[bool] 
         raise ValueError("Pandoc failed to run")
 
 
-def run_latexmk(tex_file: Path) -> None:
+def run_latexmk(tex_file: Path, keep_tex_temp: bool = False) -> None:
     """Run latexmk to compile a .tex file.
 
     Parameters
@@ -665,16 +665,28 @@ def run_latexmk(tex_file: Path) -> None:
         If latexmk fails to run.
     """    
     result = subprocess.run(
-        ["latexmk", "-pdf", "-cd", "-f", "-interaction=nonstopmode", "-halt-on-error", tex_file],
+        [
+            "latexmk", 
+            "-pdf", 
+            "-cd", 
+            "-f", 
+            "-interaction=nonstopmode", 
+            "-halt-on-error", 
+            # set max runs to 10
+            '-e', 
+            '$max_repeat=10',
+            tex_file
+        ],
         capture_output=True,
     )
     if result.returncode != 0:
         print(result.stderr.decode("utf-8"))
         raise ValueError("Latexmk failed to run")
-    # use latexmk -c to clean up
-    subprocess.run(["latexmk", "-c", "-cd", tex_file], capture_output=True)
-    # remove the tex file
-    tex_file.unlink()
+    if not keep_tex_temp:
+        # use latexmk -c to clean up
+        subprocess.run(["latexmk", "-c", "-cd", tex_file], capture_output=True)
+        # remove the tex file
+        tex_file.unlink()
 
 
 def gather_filters(filters_list: List) -> List:
@@ -726,8 +738,27 @@ def write_crossref() -> Path:
     return crossref_file
 
 
+class TimedPostProcessing:
+    def __init__(self, progress: Progress, target: str):
+        self.progress = progress
+        self.target = target
+
+    def __enter__(self):
+        self.task_id = self.progress.add_task(f"Applying {self.target}", total=None)
+        self.start_time = time.perf_counter_ns()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.end_time = time.perf_counter_ns()
+        self.progress.start_task(self.task_id)
+        self.progress.update(self.task_id, total=1, completed=1, visible=False)
+        self.progress.console.print(
+            f"\tApplied {self.target} in {format_elapsed_time(self.end_time - self.start_time)}"
+        )
+
+
 def build_pdf_notes(
-    base_dir: Path, build_dir: Path, settings: dict, logos: dict, logging_level: str = "DEBUG"
+    base_dir: Path, build_dir: Path, settings: dict, logos: dict, progress: Progress, logging_level: str = "DEBUG", keep_tex_temp: bool = False
 ) -> None:
     """Build the PDF notes from the settings and logos.
 
@@ -826,17 +857,26 @@ def build_pdf_notes(
 
     content = apply_replacements(content, replacements["latex"]["all"] + replacements["latex"]["notes"])
 
-    content = convert_tables(content)
+    # content = convert_tables(content)
     content = add_figure_cards(content)
 
     with open(tex_file, "w+") as f:
         f.write(content)
 
-    run_latexmk(tex_file)
+    if "post" in settings["latex"]["notes"]:
+        # run each post-processing script in order, passing the tex file as the first argument
+        for script in settings["latex"]["notes"]["post"]:
+            with TimedPostProcessing(progress, script):
+                result = subprocess.run([script, tex_file], capture_output=True)
+                if result.returncode != 0:
+                    print(result.stderr.decode("utf-8"))
+                    raise ValueError(f"Post-processing script {script} failed to run")
+
+    run_latexmk(tex_file, keep_tex_temp)
 
 
 def build_pdf_slides(
-    base_dir: Path, build_dir: Path, settings: dict, logos: dict, logging_level: str = "DEBUG"
+    base_dir: Path, build_dir: Path, settings: dict, logos: dict, progress: Progress, logging_level: str = "DEBUG", keep_tex_temp: bool = False
 ) -> None:
     """Build the PDF slides from the settings and logos.
 
@@ -938,19 +978,29 @@ def build_pdf_slides(
     with open(tex_file, "w+") as f:
         f.write(content)
 
-    run_latexmk(tex_file)
+    if "post" in settings["latex"]["slides"]:
+        # run each post-processing script in order, passing the tex file as the first argument
+        for script in settings["latex"]["slides"]["post"]:
+            with TimedPostProcessing(progress, script):
+                result = subprocess.run([script, tex_file], capture_output=True)
+                if result.returncode != 0:
+                    print(result.stderr.decode("utf-8"))
+                    raise ValueError(f"Post-processing script {script} failed to run")
 
-    # remove .nav, .snm, .vrb files
-    for file in build_dir.glob("*.nav"):
-        file.unlink()
-    for file in build_dir.glob("*.snm"):
-        file.unlink()
-    for file in build_dir.glob("*.vrb"):
-        file.unlink()
+    run_latexmk(tex_file, keep_tex_temp)
+
+    if not keep_tex_temp:
+        # remove .nav, .snm, .vrb files
+        for file in build_dir.glob("*.nav"):
+            file.unlink()
+        for file in build_dir.glob("*.snm"):
+            file.unlink()
+        for file in build_dir.glob("*.vrb"):
+            file.unlink()
 
 
 def build_web_notes(
-    base_dir: Path, build_dir: Path, settings: dict, logos: dict, logging_level: str = "DEBUG"
+    base_dir: Path, build_dir: Path, settings: dict, logos: dict, progress: Progress, logging_level: str = "DEBUG"
 ) -> None:
     """Build the web notes from the settings and logos.
 
@@ -997,6 +1047,7 @@ def build_web_notes(
         "toc": True,
         "toc-depth": 4,
         "css": settings["html"]["styles"] + settings["html"]["notes"]["styles"],
+        "reference-location": "section",
     }
 
     crossref_file = write_crossref()
@@ -1068,9 +1119,19 @@ def build_web_notes(
     with open(html_file, "w+") as f:
         f.write(content)
 
+    if "post" in settings["html"]["notes"]:
+        # run each post-processing script in order, passing the tex file as the first argument
+        for script in settings["html"]["notes"]["post"]:
+            with TimedPostProcessing(progress, script):
+                result = subprocess.run([script, html_file], capture_output=True)
+                if result.returncode != 0:
+                    print(result.stderr.decode("utf-8"))
+                    raise ValueError(f"Post-processing script {script} failed to run")
+
+
 
 def build_web_slides(
-    base_dir: Path, build_dir: Path, settings: dict, logos: dict, logging_level: str = "DEBUG"
+    base_dir: Path, build_dir: Path, settings: dict, logos: dict, progress: Progress, logging_level: str = "DEBUG"
 ) -> None:
     """Build the web slides from the settings and logos.
 
@@ -1118,6 +1179,7 @@ def build_web_slides(
         "slide-level": 3,
         "incremental": True,
         "css": settings["html"]["styles"] + settings["html"]["slides"]["styles"],
+        "reference-location": "section",
     }
 
     crossref_file = write_crossref()
@@ -1185,9 +1247,18 @@ def build_web_slides(
     with open(html_file, "w+") as f:
         f.write(content)
 
+    if "post" in settings["html"]["slides"]:
+        # run each post-processing script in order, passing the tex file as the first argument
+        for script in settings["html"]["slides"]["post"]:
+            with TimedPostProcessing(progress, script):
+                result = subprocess.run([script, html_file], capture_output=True)
+                if result.returncode != 0:
+                    print(result.stderr.decode("utf-8"))
+                    raise ValueError(f"Post-processing script {script} failed to run")
+
 
 def build_web_chunked(
-    base_dir: Path, build_dir: Path, settings: dict, logos: dict, logging_level: str = "DEBUG"
+    base_dir: Path, build_dir: Path, settings: dict, logos: dict, progress: Progress, logging_level: str = "DEBUG"
 ) -> None:
     """Build the web chunked output from the settings and logos.
 
@@ -1241,6 +1312,7 @@ def build_web_chunked(
         "split-level": 3,
         "toc": True,
         "css": settings["html"]["styles"] + settings["html"]["notes"]["styles"],
+        "reference-location": "section",
     }
 
     crossref_file = write_crossref()
@@ -1321,6 +1393,17 @@ def build_web_chunked(
         with open(file, "w+") as f:
             f.write(content)
 
+    if "post" in settings["html"]["notes"]:
+        # run each post-processing script in order, passing each html file as the first argument
+        for script in settings["html"]["notes"]["post"]:
+            with TimedPostProcessing(progress, script):
+                for file in files:
+                    result = subprocess.run([script, file], capture_output=True)
+                    if result.returncode != 0:
+                        print(result.stderr.decode("utf-8"))
+                        raise ValueError(f"Post-processing script {script} failed to run on file {file}")
+
+
 
 class TimedBuild:
     def __init__(self, progress: Progress, target: str):
@@ -1347,6 +1430,7 @@ def main(
     format: str | None,
     keep_temp: bool = False,
     logging_level: str = "debug",
+    keep_tex_temp: bool = False,
 ):
     build_dir: Path = base_dir / "build"
     styles_dir = build_dir / "styles"
@@ -1368,20 +1452,20 @@ def main(
         if output in ["pdf", "all"]:
             if format is None or format == "notes":
                 with TimedBuild(progress, "PDF notes"):
-                    build_pdf_notes(base_dir, build_dir, settings, logos, logging_level)
+                    build_pdf_notes(base_dir, build_dir, settings, logos, progress, logging_level, keep_tex_temp)
             if format is None or format == "slides":
                 with TimedBuild(progress, "PDF slides"):
-                    build_pdf_slides(base_dir, build_dir, settings, logos, logging_level)
+                    build_pdf_slides(base_dir, build_dir, settings, logos, progress, logging_level, keep_tex_temp)
         if output in ["web", "all"]:
             if format is None or format == "notes":
                 with TimedBuild(progress, "Web notes"):
-                    build_web_notes(base_dir, build_dir, settings, logos, logging_level)
+                    build_web_notes(base_dir, build_dir, settings, logos, progress, logging_level)
             if format is None or format == "slides":
                 with TimedBuild(progress, "Web slides"):
-                    build_web_slides(base_dir, build_dir, settings, logos, logging_level)
+                    build_web_slides(base_dir, build_dir, settings, logos, progress, logging_level)
             if format is None or format == "chunked":
                 with TimedBuild(progress, "Web chunked notes"):
-                    build_web_chunked(base_dir, build_dir, settings, logos, logging_level)
+                    build_web_chunked(base_dir, build_dir, settings, logos, progress, logging_level)
     # remove any log files we generated. filter.log, pyndoc.*.log
     if not keep_temp:
         for file in base_dir.glob("filter.log"):
