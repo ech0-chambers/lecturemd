@@ -124,7 +124,10 @@ linkReferences: true
 
 subfigureChildTemplate: '<span class="subfigure-name">($$i$$)&nbsp;</span> &nbsp;$$t$$'
 subfigureTemplate: '<span class="figure-name">$$figureTitle$$ $$i$$$$titleDelim$$</span> $$t$$'
-figureTemplate: '<span class="figure-name">$$figureTitle$$ $$i$$$$titleDelim$$</span> $$t$$'"""
+figureTemplate: '<span class="figure-name">$$figureTitle$$ $$i$$$$titleDelim$$</span> $$t$$'
+
+cref: true
+"""
 
 
 replacements = {
@@ -560,7 +563,7 @@ def sanitize_filename(filename: str) -> str:
     return "".join([c if c.isalnum() or c in ["_", "-"] else "_" for c in filename])
 
 
-def resolve_filter_path(file_path: str) -> str:
+def resolve_filter_path(file_path: str, is_post_action: bool = False) -> str:
     """Resolve the path of a filter file. Files which start `$lecturemd` are resolved relative to the filter directory in the lecturemd package, not the current working directory.
 
     **Note:** pandoc-crossref is a special case. The filter path `$lecturemd/pandoc-crossref` will be resolved to the correct executable based on the operating system.
@@ -569,6 +572,8 @@ def resolve_filter_path(file_path: str) -> str:
     ----------
     file_path : str
         The path of the filter file.
+    is_post_action : bool = False
+        If true, the file is assumed to be in `Path(__file__).parent/'post'` instead of `Path(__file__).parent/'filters'`.
 
     Returns
     -------
@@ -582,7 +587,10 @@ def resolve_filter_path(file_path: str) -> str:
     FileNotFoundError
         If the filter file is not a file.
     """    
-    filter_dir = Path(__file__).parent / "filters"
+    if is_post_action:
+        filter_dir = Path(__file__).parent / "post"
+    else:
+        filter_dir = Path(__file__).parent / "filters"
     if file_path == "$lecturemd/pandoc-crossref":
         if operating_system == Platform.WINDOWS:
             return str(filter_dir / "pandoc-crossref.exe")
@@ -774,7 +782,7 @@ def build_pdf_notes(
         The logos dictionary.
     """    
     # Take the name from the subtitle if it exists, or the title if not. If neither exist, use "latex_notes.tex"
-    if settings["general"]["subtitle"] is not None:
+    if settings["general"]["subtitle"] is not None and settings["general"]["subtitle"] != "":
         tex_file = build_dir / (
             sanitize_filename(settings["general"]["subtitle"]) + "_notes.tex"
         )
@@ -863,14 +871,20 @@ def build_pdf_notes(
     with open(tex_file, "w+") as f:
         f.write(content)
 
-    if "post" in settings["latex"]["notes"]:
-        # run each post-processing script in order, passing the tex file as the first argument
-        for script in settings["latex"]["notes"]["post"]:
-            with TimedPostProcessing(progress, script):
-                result = subprocess.run([script, tex_file], capture_output=True)
-                if result.returncode != 0:
-                    print(result.stderr.decode("utf-8"))
-                    raise ValueError(f"Post-processing script {script} failed to run")
+
+    # collect all post-action scripts
+    scripts = settings["latex"]["notes"].get("post", []) + settings["latex"].get("post", []) + settings["general"].get("post", [])
+    scripts = [{script: 0} if isinstance(script, str) else script for script in scripts]
+    scripts.sort(key=lambda x: list(x.values())[0])
+    scripts = [tuple(script.keys())[0] for script in scripts]
+    # run each post-processing script in order, passing the tex file as the first argument
+    for script in scripts:
+        script_path = resolve_filter_path(script, True)
+        with TimedPostProcessing(progress, script):
+            result = subprocess.run([script_path, tex_file], capture_output=True)
+            if result.returncode != 0:
+                print(result.stderr.decode("utf-8"))
+                raise ValueError(f"Post-processing script {script} failed to run")
 
     run_latexmk(tex_file, keep_tex_temp)
 
@@ -891,7 +905,7 @@ def build_pdf_slides(
     logos : dict
         The logos dictionary.
     """    
-    if settings["general"]["subtitle"] is not None:
+    if settings["general"]["subtitle"] is not None and settings["general"]["subtitle"] != "":
         tex_file = build_dir / (
             sanitize_filename(settings["general"]["subtitle"]) + "_slides.tex"
         )
@@ -978,14 +992,19 @@ def build_pdf_slides(
     with open(tex_file, "w+") as f:
         f.write(content)
 
-    if "post" in settings["latex"]["slides"]:
-        # run each post-processing script in order, passing the tex file as the first argument
-        for script in settings["latex"]["slides"]["post"]:
-            with TimedPostProcessing(progress, script):
-                result = subprocess.run([script, tex_file], capture_output=True)
-                if result.returncode != 0:
-                    print(result.stderr.decode("utf-8"))
-                    raise ValueError(f"Post-processing script {script} failed to run")
+    # collect all post-action scripts
+    scripts = settings["latex"]["slides"].get("post", []) + settings["latex"].get("post", []) + settings["general"].get("post", [])
+    scripts = [{script: 0} if isinstance(script, str) else script for script in scripts]
+    scripts.sort(key=lambda x: list(x.values())[0])
+    scripts = [tuple(script.keys())[0] for script in scripts]
+    # run each post-processing script in order, passing the tex file as the first argument
+    for script in scripts:
+        script_path = resolve_filter_path(script, True)
+        with TimedPostProcessing(progress, script):
+            result = subprocess.run([script_path, tex_file], capture_output=True)
+            if result.returncode != 0:
+                print(result.stderr.decode("utf-8"))
+                raise ValueError(f"Post-processing script {script} failed to run")
 
     run_latexmk(tex_file, keep_tex_temp)
 
@@ -1015,7 +1034,7 @@ def build_web_notes(
     logos : dict
         The logos dictionary.
     """    
-    if settings["general"]["subtitle"] is not None:
+    if settings["general"]["subtitle"] is not None and settings["general"]["subtitle"] != "":
         html_file = build_dir / (
             sanitize_filename(settings["general"]["subtitle"]) + "_notes.html"
         )
@@ -1119,14 +1138,19 @@ def build_web_notes(
     with open(html_file, "w+") as f:
         f.write(content)
 
-    if "post" in settings["html"]["notes"]:
-        # run each post-processing script in order, passing the tex file as the first argument
-        for script in settings["html"]["notes"]["post"]:
-            with TimedPostProcessing(progress, script):
-                result = subprocess.run([script, html_file], capture_output=True)
-                if result.returncode != 0:
-                    print(result.stderr.decode("utf-8"))
-                    raise ValueError(f"Post-processing script {script} failed to run")
+    # collect all post-action scripts
+    scripts = settings["html"]["notes"].get("post", []) + settings["html"].get("post", []) + settings["general"].get("post", [])
+    scripts = [{script: 0} if isinstance(script, str) else script for script in scripts]
+    scripts.sort(key=lambda x: list(x.values())[0])
+    scripts = [tuple(script.keys())[0] for script in scripts]
+    # run each post-processing script in order, passing the tex file as the first argument
+    for script in scripts:
+        script_path = resolve_filter_path(script, True)
+        with TimedPostProcessing(progress, script):
+            result = subprocess.run([script_path, html_file], capture_output=True)
+            if result.returncode != 0:
+                print(result.stderr.decode("utf-8"))
+                raise ValueError(f"Post-processing script {script} failed to run")
 
 
 
@@ -1146,7 +1170,7 @@ def build_web_slides(
     logos : dict
         The logos dictionary.
     """    
-    if settings["general"]["subtitle"] is not None:
+    if settings["general"]["subtitle"] is not None and settings["general"]["subtitle"] != "":
         html_file = build_dir / (
             sanitize_filename(settings["general"]["subtitle"]) + "_slides.html"
         )
@@ -1247,14 +1271,20 @@ def build_web_slides(
     with open(html_file, "w+") as f:
         f.write(content)
 
-    if "post" in settings["html"]["slides"]:
-        # run each post-processing script in order, passing the tex file as the first argument
-        for script in settings["html"]["slides"]["post"]:
-            with TimedPostProcessing(progress, script):
-                result = subprocess.run([script, html_file], capture_output=True)
-                if result.returncode != 0:
-                    print(result.stderr.decode("utf-8"))
-                    raise ValueError(f"Post-processing script {script} failed to run")
+
+    # collect all post-action scripts
+    scripts = settings["html"]["slides"].get("post", []) + settings["html"].get("post", []) + settings["general"].get("post", [])
+    scripts = [{script: 0} if isinstance(script, str) else script for script in scripts]
+    scripts.sort(key=lambda x: list(x.values())[0])
+    scripts = [tuple(script.keys())[0] for script in scripts]
+    # run each post-processing script in order, passing the tex file as the first argument
+    for script in scripts:
+        script_path = resolve_filter_path(script, True)
+        with TimedPostProcessing(progress, script):
+            result = subprocess.run([script_path, html_file], capture_output=True)
+            if result.returncode != 0:
+                print(result.stderr.decode("utf-8"))
+                raise ValueError(f"Post-processing script {script} failed to run")
 
 
 def build_web_chunked(
@@ -1273,7 +1303,7 @@ def build_web_chunked(
     logos : dict
         The logos dictionary.
     """    
-    if settings["general"]["subtitle"] is not None:
+    if settings["general"]["subtitle"] is not None and settings["general"]["subtitle"] != "":
         html_file = build_dir / (
             sanitize_filename(settings["general"]["subtitle"]) + "_chunked"
         )
@@ -1393,15 +1423,20 @@ def build_web_chunked(
         with open(file, "w+") as f:
             f.write(content)
 
-    if "post" in settings["html"]["notes"]:
-        # run each post-processing script in order, passing each html file as the first argument
-        for script in settings["html"]["notes"]["post"]:
-            with TimedPostProcessing(progress, script):
-                for file in files:
-                    result = subprocess.run([script, file], capture_output=True)
-                    if result.returncode != 0:
-                        print(result.stderr.decode("utf-8"))
-                        raise ValueError(f"Post-processing script {script} failed to run on file {file}")
+    # collect all post-action scripts
+    scripts = settings["html"]["notes"].get("post", []) + settings["html"].get("post", []) + settings["general"].get("post", [])
+    scripts = [{script: 0} if isinstance(script, str) else script for script in scripts]
+    scripts.sort(key=lambda x: list(x.values())[0])
+    scripts = [tuple(script.keys())[0] for script in scripts]
+
+    for script in scripts:
+        script_path = resolve_filter_path(script, True)
+        with TimedPostProcessing(progress, script):
+            for file in files:
+                result = subprocess.run([script_path, file], capture_output=True)
+                if result.returncode != 0:
+                    print(result.stderr.decode("utf-8"))
+                    raise ValueError(f"Post-processing script {script} failed to run on file {file}")
 
 
 

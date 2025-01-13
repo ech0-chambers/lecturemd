@@ -10,6 +10,13 @@ $-- (For syntax highlighting)
 \usepackage{siunitx}
 
 \input{styles/colour_scheme.tex}
+\usepackage{tabularray}
+
+\descriptionsset{
+    item style = {\bfseries\color{Blue}},
+    subitem style = {\itshape\color{Blue_3}},
+    divider style = {Red, thick}
+}
 
 \renewcommand{\note}[1]{\textit{\semibold{\color{Red}Note:\ }\color{ForegroundColour}#1\normalcolor}}
 \newcommand{\hint}[1]{\textit{\semibold{\color{Blue}Hint:\ }\color{ForegroundColour}#1\normalcolor}}
@@ -19,6 +26,16 @@ $-- (For syntax highlighting)
         \node (graphic) {\includegraphics[#1]{#2}};
         \tikzcard[node = graphic, #3]
     \end{tikzpicture}
+}
+
+\makeatletter
+\newcommand{\Pause}[1][]{\unless\ifmeasuring@\relax
+\pause[#1]%
+\fi}
+\makeatother
+
+\descriptionsset{
+    pauses
 }
 
 $for(header-includes)$

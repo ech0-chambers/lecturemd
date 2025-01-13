@@ -21,7 +21,7 @@ $-- (For syntax highlighting)
 }
 
 \newcounter{examplesolutionpartcounter}
-\newcounter{examplesolutionsubpartcounter}
+\newcounter{examplesolutionsubpartcounter}[examplesolutionpartcounter]
 \setcounter{examplesolutionpartcounter}{0}
 \setcounter{examplesolutionsubpartcounter}{0}
 
@@ -63,7 +63,7 @@ $-- (For syntax highlighting)
 \setbeamercolor{background canvas}{bg = BackgroundColour}
 \setbeamercolor{normal text}{bg = BackgroundColour, fg = ForegroundColour}
 \setbeamercolor{titlelike}{bg = Green, fg = BackgroundColour}
-\setbeamercolor{frametitle}{bg = Surface5, fg = ForegroundColour}
+\setbeamercolor{frametitle}{bg = AutoSurface5, fg = ForegroundColour}
 \setbeamercolor{palette primary}{bg = Accent1, fg = BackgroundColour}
 \setbeamercolor{palette secondary}{bg = Accent1_3, fg = ForegroundColour}
 \setbeamercolor{palette tertiary}{bg = Accent1_4, fg = ForegroundColour}
@@ -209,9 +209,4 @@ $-- (For syntax highlighting)
     citecolor = Red,
     pdftitle={\@pdftitle},
     pdfauthor={\@author},
-}
-
-
-\nicetableset{
-    pauses = true,
 }

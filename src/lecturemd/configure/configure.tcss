@@ -458,6 +458,42 @@ ConfirmationScreen {
     }
 }
 
+FiltersDescriptionScreen,
+PostActionsDescriptionScreen {
+    background: #0C355E20;
+    align: center middle;
+    & > Container {
+        width: 50%;
+        height: auto;
+        margin: 5;
+        padding: 1 2;
+        background: $clr-background;
+        & > Horizontal {
+            width: 100%;
+            height: auto;
+            & > Button {
+                background: $clr-success-3;
+                border-top: tall $clr-success-4;
+                border-bottom: tall $clr-success;
+                outline-left: tall $clr-success-3;
+                outline-right: tall $clr-success-3;
+                padding: 0;
+                margin: 0;
+                height: 3;
+                width: 10;
+                &:hover,
+                &:focus {
+                    background: $clr-success;
+                    border-top: tall $clr-success-3;
+                    border-bottom: tall $clr-success-2;
+                    border-left: tall $clr-success;
+                    border-right: tall $clr-success;
+                }
+            }
+        }
+    }
+}
+
 Label.title {
     color: $clr-blue;
     text-style: bold;

@@ -38,4 +38,4 @@ package-dir = {"" = "src"}
 [tool.setuptools.package-data]
 "lecturemd.new" = ["templates/*", "styles/*", "templates/latex_packages/*"]
 "lecturemd.configure" = ["configure.tcss", "ncl.tcss"]
-"lecturemd.make" = ["filters/*"]
+"lecturemd.make" = ["filters/*", "post/*"]

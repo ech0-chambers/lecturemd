@@ -25,11 +25,13 @@
     % #6 - label anchor
     % #7 - in angle
     % #8 - out angle
+    \vspace{-\parskip}
     \begin{tikzpicture}[remember~picture,overlay]
     \highlight{#4}{#1}
     \node[anchor = #6, #1] (text) at ($$(#4.#5) + (#2)$$) {#3};
     \draw[annotation, #1] (text.#6) to[in = \fp_to_decimal:n #7, out = \fp_to_decimal:n #8] ($$(#4.#5) + (\fp_to_decimal:n {0.1* cosd(#7)}, \fp_to_decimal:n {0.1 * sind(#7)})$$);
     \end{tikzpicture}
+    \vspace{-\baselineskip}
 }
 
 \cs_new:Npn \label_node:nnnnnnnn #1#2#3#4#5#6#7#8 {

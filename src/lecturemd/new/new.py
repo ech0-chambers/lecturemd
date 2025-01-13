@@ -21,6 +21,7 @@ base_settings = {
         "institution": "Your Institution",
         "use pyndoc": True,
         "preamble": [],
+        "post": [],
         "maths preamble": ["preamble/maths.tex"],
         "filters": [
             "$lecturemd/notesslides.py",
@@ -34,25 +35,34 @@ base_settings = {
         "figure extension": "pdf",
         "preamble": ["preamble/latex.tex"],
         "filters": ["$lecturemd/latex_environments.py"],
+        "post": [],
         "notes": {
             "preamble": ["preamble/latex_notes.tex"],
             "filters": [{"$lecturemd/delistify.py": -10}, {"$lecturemd/derule.py": -9}],
+            "post": ["$lecturemd/tex_notes.py"],
         },
-        "slides": {"preamble": ["preamble/latex_slides.tex"], "filters": []},
+        "slides": {
+            "preamble": ["preamble/latex_slides.tex"], 
+            "filters": [],
+            "post": ["$lecturemd/tex_slides.py"],
+        },
     },
     "html": {
         "figure extension": "svg",
         "preamble": ["preamble/html.html"],
         "filters": ["$lecturemd/html_tcolorbox.py"],
+        "post": [],
         "styles": [],
         "notes": {
             "preamble": ["preamble/html_notes.html"],
             "filters": [{"$lecturemd/delistify.py": -10}, {"$lecturemd/derule.py": -9}],
+            "post": [],
             "styles": ["styles/notes.css"],
         },
         "slides": {
             "preamble": ["preamble/html_slides.html"],
             "filters": [],
+            "post": [],
             "styles": ["styles/slides.css"],
         },
     },

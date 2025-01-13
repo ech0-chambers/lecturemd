@@ -15,10 +15,14 @@ body {
 #content {
   max-width: 30cm;
   margin: auto;
-  counter-reset: exmapleCounter;
   padding-block-end: 3em;
   padding-inline: 3em;
   min-height: 100vh;
+  counter-reset: tableCounter;
+}
+
+h1 {
+  counter-reset: exmapleCounter;
 }
 
 p {
@@ -69,6 +73,11 @@ li {
   margin-inline: auto !important;
 }
 
+sup mjx-math,
+sub mjx-math {
+  font-size: 0.8em;
+}
+
 h1.title {
   font-size: 3rem;
   font-weight: 200;
@@ -102,7 +111,7 @@ p.date {
   text-indent: 0;
 }
 
-span.math {
+mjx-math {
   color: var(--clr-foreground);
   font-size: 0.9em;
 }
@@ -169,7 +178,9 @@ h3::after {
 }
 
 div.note > p,
-span.note {
+span.note,
+div.hint > p,
+span.hint {
   font-style: italic;
   color: var(--clr-foreground);
 }
@@ -183,8 +194,41 @@ span.note::before {
   display: inline;
 }
 
+div.hint > p::before,
+span.hint::before {
+  content: "Hint: ";
+  font-weight: 400;
+  font-style: italic;
+  color: var(--clr-green);
+  display: inline;
+}
+
+.example-solution-part-divider {
+  display: block;
+  background: var(--clr-green-4);
+  width: calc(
+    100% + 2 * var(--tcolorbox-border-width) + 2 *
+      var(--tcolorbox-inner-padding) - 2 * var(--tcolorbox-border-width)
+  );
+
+  margin-left: calc(-1 * var(--tcolorbox-inner-padding));
+
+  margin-block: 1em;
+  padding-inline: 1em;
+  padding-block: 0.5ch;
+  box-sizing: border-box;
+}
+
+.example-solution-part-divider::before {
+  counter-increment: examplePartCounter;
+  content: "Part " counter(examplePartCounter, lower-alpha) ": ";
+  color: var(--clr-foreground);
+  font-weight: 400;
+}
+
 .tcolorbox.example {
   --tcolorbox-main-color: var(--clr-green);
+  counter-reset: examplePartCounter;
 }
 
 .tcolorbox.definition {
@@ -202,10 +246,24 @@ span.note::before {
   border-radius: var(--tcolorbox-border-radius);
   padding-block-start: 0;
   box-sizing: border-box;
-  background: var(--clr-background);
   color: var(--clr-foreground);
   padding-inline: var(--tcolorbox-inner-padding);
   margin-block: 2em;
+  position: relative;
+  /* set position so that z-index will work */
+}
+/* This is a bit of a hack to get the correct z-ordering for the tcolorbox background, the ordered list label, and the ordered list label background. */
+.tcolorbox::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: var(--tcolorbox-border-radius);
+  background: var(--clr-background);
+  z-index: -2;
 }
 
 .tcolorbox > div.title {
@@ -228,6 +286,10 @@ span.note::before {
   margin-block-start: 0;
   padding-block: 0.25em;
   text-indent: 0;
+}
+
+.tcolorbox > div.title mjx-math {
+    color: var(--clr-background);
 }
 
 .tcolorbox > div.title > p::before {
@@ -257,8 +319,93 @@ span.note::before {
   color: var(--clr-magenta);
 }
 
+.tcolorbox.example ol > li::before {
+  background: var(--clr-green);
+}
+
+.tcolorbox.example ul > li::marker {
+  color: var(--clr-green);
+}
+
+.tcolorbox.example li ol > li::before {
+  background: var(--clr-green-4);
+}
+
+.tcolorbox.example li ol > li::marker {
+  background: var(--clr-green-1);
+}
+
+.tcolorbox.example :not(li) > ul > li > ul > li::marker {
+  color: var(--clr-green-3);
+}
+
+.tcolorbox.example li li li::marker {
+  color: var(--clr-green-4);
+}
+
+.tcolorbox.example li li li li::marker {
+  color: var(--clr-green-5);
+}
+
+.tcolorbox.definition ol > li::before {
+  background: var(--clr-blue);
+}
+
+.tcolorbox.definition ul > li::marker {
+  color: var(--clr-blue);
+}
+
+.tcolorbox.definition li ol > li::before {
+  background: var(--clr-blue-4);
+}
+
+.tcolorbox.definition li ol > li::marker {
+  background: var(--clr-blue-1);
+}
+
+.tcolorbox.definition :not(li) > ul > li > ul > li::marker {
+  color: var(--clr-blue-3);
+}
+
+.tcolorbox.definition li li li::marker {
+  color: var(--clr-blue-4);
+}
+
+.tcolorbox.definition li li li li::marker {
+  color: var(--clr-blue-5);
+}
+
+.tcolorbox.aside ol > li::before {
+  background: var(--clr-magenta);
+}
+
+.tcolorbox.aside ul > li::marker {
+  color: var(--clr-magenta);
+}
+
+.tcolorbox.aside li ol > li::before {
+  background: var(--clr-magenta-4);
+}
+
+.tcolorbox.aside li ol > li::marker {
+  background: var(--clr-magenta-1);
+}
+
+.tcolorbox.aside :not(li) > ul > li > ul > li::marker {
+  color: var(--clr-magenta-3);
+}
+
+.tcolorbox.aside li li li::marker {
+  color: var(--clr-magenta-4);
+}
+
+.tcolorbox.aside li li li li::marker {
+  color: var(--clr-magenta-5);
+}
+
 span.subfigure-name,
-span.figure-name {
+span.figure-name,
+span.figformat {
   font-weight: 600;
   color: var(--clr-blue);
 }
@@ -293,10 +440,59 @@ figure.figure-rows {
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: center;
+  align-items: start;
 }
 
-li {
+div[data-figure-rows="2"] {
+  --figure-rows: 2;
+}
+
+div[data-figure-rows="3"] {
+  --figure-rows: 3;
+}
+
+div[data-figure-rows="4"] {
+  --figure-rows: 4;
+}
+
+div[data-figure-rows="5"] {
+  --figure-rows: 5;
+}
+
+figure.subfigures > div {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: start;
+}
+
+figure.subfigures > div > figure {
+  width: calc(100% / var(--figure-rows) - 2pt);
+  margin-inline: 2ch;
+}
+
+
+ul > li {
   list-style-type: square;
+}
+
+ol > li::marker {
+  font-size: 1rem;
+  color: var(--clr-background);
+  font-weight: 400;
+}
+
+ol > li::before {
+  content: "";
+  display: inline;
+  padding-inline: 0.75em;
+  height: 1em;
+  background: var(--clr-accent2);
+  margin-left: -1.5em;
+  margin-right: 1ch;
+  z-index: -1;
+  position: relative;
+  border-radius: 0.25em;
 }
 
 li::marker {
@@ -306,6 +502,15 @@ li::marker {
 
 li li {
   padding-left: 1ch;
+}
+
+li ol > li::before {
+  margin-left: calc(-1.5em - 1ch);
+  background: var(--clr-accent2-4);
+}
+
+li ol > li::marker {
+  color: var(--clr-accent2-1);
 }
 
 :not(li) > ul > li > ul > li::marker {
@@ -330,52 +535,6 @@ nav#TOC {
   border: 2px solid var(--clr-blue);
   padding: 1em;
   background-color: var(--clr-background);
-}
-
-@media only screen and (max-width: 600px) {
-  :root {
-    font-size: 1rem;
-  }
-
-  #title-block-header {
-    margin-top: 1in;
-  }
-
-  p {
-    line-height: 1.5rem;
-    text-align: justify;
-  }
-
-  h1 {
-    font-size: 1.5rem;
-  }
-
-  h1.title {
-    font-size: 2rem;
-  }
-
-  h2 {
-    font-size: 1.25rem;
-  }
-
-  h3,
-  h4 {
-    font-size: 1.2rem;
-  }
-
-  #header-bar,
-  #footer-bar {
-    padding-inline: 1em !important;
-    font-size: 1rem !important;
-  }
-
-  #content {
-    padding-inline: 2ch;
-  }
-
-  figure {
-    margin-inline: 3ch;
-  }
 }
 
 header#header-bar,
@@ -481,7 +640,6 @@ body > mjx-container:first-child {
   margin-block: 1.5em;
 }
 
-
 table {
   margin: auto;
   border-collapse: collapse;
@@ -493,7 +651,8 @@ table {
   border: none;
 }
 
-th, td{
+th, 
+td {
   border: 1px solid var(--clr-foreground);
   color: var(--clr-foreground);
 }
@@ -503,15 +662,18 @@ td {
   border-bottom: none;
 }
 
-.tcolorbox th, .tcolorbox td {
+.tcolorbox th, 
+.tcolorbox td {
   border: none;
 }
 
-.tcolorbox th:not(:first-child), .tcolorbox td:not(:first-child) {
+.tcolorbox th:not(:first-child), 
+.tcolorbox td:not(:first-child) {
   border-left: 1px solid var(--clr-accent1-4);
 }
 
-th, td {
+th, 
+td {
   padding: 0.75ch;
   padding-inline: 1.5em;
 }
@@ -530,14 +692,14 @@ th {
 tr:nth-child(2n) {
   background-color: var(--clr-background);
 }
-tr:nth-child(2n+1) {
+tr:nth-child(2n + 1) {
   background-color: var(--clr-surface6);
 }
 
 .tcolorbox tr:nth-child(2n) {
   background-color: var(--clr-background-5);
 }
-.tcolorbox tr:nth-child(2n+1) {
+.tcolorbox tr:nth-child(2n + 1) {
   background-color: var(--clr-surface6);
 }
 
@@ -555,4 +717,192 @@ th .MathJax {
   margin: auto;
   height: 0;
   border-bottom: 2px solid var(--clr-green);
+}
+
+#TOC > ul {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+#TOC > ul > li {
+  width: 30%;
+  font-size: 1.2em;
+  font-weight: 400;
+}
+
+#TOC > ul > li > ul {
+  font-size: 1rem;
+  font-weight: 300;
+}
+
+li ul {
+  padding-left: 1.5em;
+}
+
+li li ul {
+  padding-left: 1em;
+}
+
+li li ul > li {
+  padding-left: 0em;
+}
+
+li li {
+  margin-block: 0.75em;
+}
+
+li li li {
+  margin-block: 0.5em;
+}
+
+li li li li {
+  margin-block: 0em;
+}
+
+@media only screen and (max-width: 600px) {
+  :root {
+    font-size: 1rem;
+  }
+
+  #title-block-header {
+    margin-top: 1in;
+  }
+
+  p {
+    line-height: 1.5rem;
+    text-align: justify;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h1.title {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  h3,
+  h4 {
+    font-size: 1.2rem;
+  }
+
+  #header-bar,
+  #footer-bar {
+    padding-inline: 1em !important;
+    font-size: 1rem !important;
+  }
+
+  #content {
+    padding-inline: 2ch;
+  }
+
+  figure {
+    margin-inline: 3ch;
+  }
+
+  #TOC > ul {
+    display: block;
+  }
+
+  #TOC > ul > li {
+    width: 100%;
+  }
+}
+
+dl {
+  display: grid;
+  grid-template-columns: 1.5in 1fr;
+  grid-row-gap: 2em;
+  grid-column-gap: 0;
+  align-items: center;
+}
+
+dl > dt {
+  border-right: 2px solid var(--clr-red);
+  text-align: right;
+  padding-right: 1em;
+  padding-block: 0;
+  color: var(--clr-blue);
+  font-weight: 500;
+  height: 100%;
+  line-height: 1.675em;
+}
+
+dl > dt mjx-container {
+  color: var(--clr-blue);
+}
+
+dl > dd {
+  margin-left: 0;
+  padding-left: 1em;
+  padding-block: 0;
+}
+
+dd p:first-of-type {
+  margin-top: 0;
+}
+dd p:last-of-type {
+  margin-bottom: 0;
+}
+
+caption.table-caption {
+  display: block;
+  color: var(--clr-foreground);
+  width: 90%;
+  margin-inline: auto;
+  text-align: center;
+}
+
+caption.table-caption::before {
+  counter-increment: tableCounter;
+  content: "Table " counter(tableCounter) ":";
+  display: inline;
+  font-weight: 600;
+  color: var(--clr-blue);
+  margin-right: 1ch;
+}
+
+aside.footnotes {
+  border-top: 1px solid var(--clr-foreground);
+  border-bottom: 1px solid var(--clr-foreground);
+  width: 90%;
+  margin-left: auto;
+  padding-block: 0;
+  margin-block: 0;
+  font-size: 0.9em;
+}
+
+aside.footnotes > ol > li::before {
+  display: none;
+}
+
+aside.footnotes > ol > li::marker {
+  font-size: 0.9em;
+  font-family: "Fira Sans Light", sans-serif;
+  color: var(--clr-blue-1);
+}
+
+aside.footnotes > ol > li {
+  color: var(--clr-foreground);
+}
+
+aside.footnotes a.footnote-back {
+  padding-left: 1ch;
+}
+
+aside.footnotes > hr {
+  display: none;
+}
+
+a.footnote-ref > sup::before {
+  content: "[";
+}
+
+a.footnote-ref > sup::after {
+  content: "↴]";
 }

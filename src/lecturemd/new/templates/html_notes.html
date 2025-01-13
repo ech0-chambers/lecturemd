@@ -27,6 +27,69 @@ $endif$
 $for(css)$
   <link rel="stylesheet" href="$css$" />
 $endfor$
+<script>
+    function fix_footer() {
+        // if we are on mobile and on firefox, `position: sticky` doesn't work, so change to `position: fixed` for `header#header-bar` and `footer#footer-bar`
+        // TODO: Fix this.
+        // are we on mobile?
+        if (window.matchMedia("(max-width: 767px)").matches) {
+            // are we on firefox?
+            if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
+                console.log('Firefox on mobile detected');
+                // // change the position of the header and footer
+                // document.getElementById('header-bar').style.position = 'fixed';
+                // document.getElementById('footer-bar').style.position = 'fixed';
+                // // set their width to 100vw instead of 100%
+                // document.getElementById('header-bar').style.width = '100vw';
+                // document.getElementById('footer-bar').style.width = '100vw';
+                // hide the footer
+                document.getElementById('footer-bar').style.display = 'none';
+            }
+            else {
+                console.log("Mobile but not Firefox");
+            }
+        } else {
+            console.log("Not mobile");
+        }
+    }
+    function fix_tables() {
+        // get all tables with captions. Move the caption outside (after) the table.
+        var tables = document.querySelectorAll('table');
+        tables.forEach(function(table) {
+            // if the table has a caption
+            if (table.querySelector('caption')) {
+                // get the caption
+                var caption = table.querySelector('caption');
+                // get the parent of the table
+                var parent = table.parentNode;
+                // insert the caption after the table
+                parent.insertBefore(caption, table.nextSibling);
+                // separate the `Table ##:` from the caption, and add a 'table-caption' class
+                caption.innerHTML = caption.innerHTML.replace(/Table \d+:/, '');
+                caption.classList.add('table-caption');
+                // add .table to parent
+                parent.classList.add('table');
+            }
+        });
+    }
+    function fix_footnotes() {
+        // find all `aside.footnotes`. Check each `li` -- if it only contains one paragraph, remove the `p` tag.
+        var footnotes = document.querySelectorAll('aside.footnotes');
+        footnotes.forEach(function(footnote) {
+            var list_items = footnote.querySelectorAll('li');
+            list_items.forEach(function(item) {
+                if (item.children.length === 1 && item.children[0].tagName === 'P') {
+                    var p = item.querySelector('p');
+                    item.innerHTML = p.innerHTML;
+                }
+            });
+        });
+    }
+    // run the function on page load
+    window.onload = fix_footer;
+    window.onload = fix_tables;
+    window.onload = fix_footnotes;
+</script>
 $for(header-includes)$
   $header-includes$
 $endfor$
@@ -41,8 +104,10 @@ $if(math)$
 $if(mathjax)$
   <script>
     MathJax = {
+        loader: {load: ['[tex]/mathtools']},
       tex: {
         inlineMath: [["$$", "$$"], ["\\(", "\\)"]],
+        packages: { '[+]': ['mathtools'] },
         // tags: "ams",
       },
       chtml: { displayAlign: 'left' },

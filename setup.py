@@ -20,7 +20,7 @@ setup(
     package_data={
         "lecturemd.new": ["templates/*", "styles/*", "templates/latex_packages/*"],
         "lecturemd.configure": ["configure.tcss", "ncl.tcss"],
-        "lecturemd.make": ["filters/*"],
+        "lecturemd.make": ["filters/*", "post/*"],
     },
     include_package_data=True,
 )

@@ -39,6 +39,36 @@ $endfor$
 $if(math)$
   $math$
 $endif$
+<script>
+    let frametitle_interval_id;
+    function add_frametitle_hook() {
+        if (typeof Reveal !== 'undefined') {
+            clearInterval(frametitle_interval_id);
+            Reveal.addEventListener('slidetransitionend', (event) => {
+                current_slide = Reveal.getCurrentSlide();
+                // get any .frametitle elements on the current slide
+                let frametitle = current_slide.querySelector('.frametitle');
+                // set opacity to 1
+                if (frametitle) {
+                    frametitle.style.opacity = 1;
+                }
+                // loop through all other slides. If they have a frametitle, set opacity to 0
+                Reveal.getSlides().forEach((slide) => {
+                    if (slide !== current_slide) {
+                        let other_frametitle = slide.querySelector('.frametitle');
+                        if (other_frametitle) {
+                            other_frametitle.style.opacity = 0;
+                        }
+                    }
+                });
+            });
+        } else {
+            console.log('Reveal is not yet defined. Waiting...');
+        }
+    }
+    
+    frametitle_interval_id = setInterval(add_frametitle_hook, 100);
+</script>
 $for(header-includes)$
   $header-includes$
 $endfor$
@@ -298,11 +328,13 @@ $if(mathjax)$
 
         mathjax3: {
           mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js',
+          loader: {load: ['[tex]/mathtools']},
           tex: {
             inlineMath: [
               ['$$', '$$'],
               ['\\(', '\\)'],
             ],
+            packages: { '[+]': ['mathtools'] },
             // tags: 'all',
           },
           // options: {

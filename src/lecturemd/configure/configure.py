@@ -50,6 +50,62 @@ class ConfirmationScreen(ModalScreen):
     def handle_button(self, message):
         self.dismiss(message.button.id)
 
+class FiltersDescriptionScreen(ModalScreen):
+    def compose(self):
+        with Container():
+            yield Markdown(
+"""
+## Filters
+
+Filters are applied in the order they are listed as Pandoc filters. A brief description of the in-built filters is given below.
+
+----
+
+- **combine_lists.py**: Combines lists which span multiple slides into a single list. A `div` with the class `combine-lists` which contains only multiple lists, separated by a horizontal rule (`---`), will be combined into a single list.
+- **definitions.py**: Converts a markdown definition list into the correct format for the included `descriptions.sty` LaTeX package.
+- **delistify.py**: Converts lists in the slides output to paragraphs in the notes output. 2nd order or higher lists are converted to 1st order (etc.) lists. 
+- **examples.py**: Properly handles the formatting of examples in the beamer and revealjs output.
+- **format_filter.py**: Filters content based on the output format. Any span or div with the class `html-only` will be removed from the latex output, and any span or div with the class `latex-only will be removed from the html output.
+- **html_tcolorbox.py**: Converts markdown divs with the class `latex-env` and one of the classes `example`, `definitionbox`, or `aside` into tcolorbox equivalents in the html output.
+- **latex-environment.py**: Converts markdown divs with the class `latex-env` into the correct LaTeX environment, and `latex-macro` into the correct LaTeX macro. For example, `[content]{.latex-macro .macro-name args="[opt-arg]{arg}"}` will be converted into `\macro-name[opt-arg]{arg}{content}`.
+- **notesslides.py**: Filters content based on the output type. Any span or div with the class `notes-only` will be removed from the slides output (beamer and revealjs), and any span or div with the class `slides-only` will be removed from the notes output (pdf, html, and chunkedhtml).
+- **pause_before.py**: Any span or div with the class `pause-before` will have an additional `\pause` command inserted before it in the beamer output (and equivalent for revealjs).
+- **pandoc-crossref**: Adds cross-references to the output. See the [Pandoc Crossref documentation](https://lierdakil.github.io/pandoc-crossref/) for more information.
+- **split_slides.py**: Allows multiple slides to occur within a div. A `div` with the class `split-on-slides` will be split into multiple slides, each containing a `div` with the same classes, attributes etc. as the original div.
+- **tabularray.py**: Converts markdown tables into LaTeX tables using the `tabularray` package. This allows for more flexible table formatting.
+""")
+            with Horizontal():
+                yield Button("Close", id = "modal_close", classes = "success")
+
+    @on(Button.Pressed)
+    def handle_button(self, message):
+        self.dismiss(message.button.id)
+
+class PostActionsDescriptionScreen(ModalScreen):
+    def compose(self):
+        with Container():
+            yield Markdown(
+"""
+## Post Actions
+
+Post actions are applied in the order they are listed. They should each be a python script which accepts a single command line argument: the ouput file (either a `.tex` or `.html` file). This file should then be modified in-place. These are useful for making final adjustments which would otherwise require the use of a custom Pandoc writer. However, if something is possible with a Pandoc filter, that should be the preferred option. A short list of the inbuilt post action files is given below.
+
+----
+
+- **tex_notes.py**: This performs three tasks:
+    - Converts a `fixedfigure` environment containing a `figure` environment such that the position of the figure is `[H]` (i.e, fixed in the text instead of floating).
+    - Converts equations which only contain a `split` environment into an `align*` environment.
+    - Fixes some spacing around text subscripts and superscripts.
+- **tex_slides.py**: This alters multi-line equations in an `align` environment to pause between each line. Note that this is not perfect -- generally, an extra pause is added after the first line of the equation, and the last line of an equation may appear at the same time as the next list item. This is due to Beamer's processing of an itemize environment with the `[<+->]` option.
+""")
+            with Horizontal():
+                yield Button("Close", id = "modal_close", classes = "success")
+
+    @on(Button.Pressed)
+    def handle_button(self, message):
+        self.dismiss(message.button.id)
+
+
 def read_settings(base_dir: Path) -> dict:
     settings_path = base_dir / ".lecturemd/lecturemd.yaml"
     if not settings_path.exists():
@@ -93,6 +149,38 @@ The full path to the settings file would be: {settings_path}"""
         {filter: 0} if isinstance(filter, str) else filter
         for filter in settings["html"]["slides"]["filters"]
     ]
+
+    # Same for "post"
+
+    settings["general"]["post"] = [
+        {post_action: 0} if isinstance(post_action, str) else post_action
+        for post_action in settings["general"]["post"]
+    ]
+    settings["latex"]["post"] = [
+        {post_action: 0} if isinstance(post_action, str) else post_action
+        for post_action in settings["latex"]["post"]
+    ]
+    settings["latex"]["notes"]["post"] = [
+        {post_action: 0} if isinstance(post_action, str) else post_action
+        for post_action in settings["latex"]["notes"]["post"]
+    ]
+    settings["latex"]["slides"]["post"] = [
+        {post_action: 0} if isinstance(post_action, str) else post_action
+        for post_action in settings["latex"]["slides"]["post"]
+    ]
+    settings["html"]["post"] = [
+        {post_action: 0} if isinstance(post_action, str) else post_action
+        for post_action in settings["html"]["post"]
+    ]
+    settings["html"]["notes"]["post"] = [
+        {post_action: 0} if isinstance(post_action, str) else post_action
+        for post_action in settings["html"]["notes"]["post"]
+    ]
+    settings["html"]["slides"]["post"] = [
+        {post_action: 0} if isinstance(post_action, str) else post_action
+        for post_action in settings["html"]["slides"]["post"]
+    ]
+
     return settings
 
 
@@ -245,15 +333,11 @@ def general_settings():
         ],  # for some reason, getting from keys is not working, so we're doing it directly. Maybe something to do with bool conversion, but I couldn't find it.
         tooltip="Use Pyndoc and its preprocessor. See github.com/ech0-chambers/pyndoc for more information.",
     )
-    for widget in document_settings():
-        yield widget
-    for widget in general_filters():
-        yield widget
-    for widget in general_preambles():
-        yield widget
-    for widget in maths_preamble():
-        yield widget
-
+    yield from document_settings()
+    yield from general_filters()
+    yield from general_post_actions()
+    yield from general_preambles()
+    yield from maths_preamble()
 
 def document_settings():
     with Collapsible(
@@ -313,10 +397,13 @@ def document_settings():
 
 def general_filters():
     filters = settings["general"]["filters"]
-    for widget in filters_panel(filters, "general", "general", None):
-        yield widget
+    yield from filters_panel(filters, "general", "general", None)
     return
 
+def general_post_actions():
+    post_actions = settings["general"]["post"]
+    yield from post_actions_panel(post_actions, "general", "general", None)
+    return
 
 def filters_panel(
     filters: List[str | dict[str, int]],
@@ -416,21 +503,122 @@ def filters_panel(
                 )
                 yield Button("+", id=f"{id_prefix}-filters-add-button", classes="add")
 
+        yield Button("Help", id=f"{id_prefix}-filters-help", classes="help")
+
+
+def post_actions_panel(
+    post_actions: List[str | dict[str, int]],
+    id_prefix: str,
+    title: str,
+    previous_post_actions: List[Tuple[str | dict[str, int], str]] | None = None,
+    description: str | None = None,
+    panel_title: str | None = None,
+):
+    all_post_actions = [
+        (
+            (post_action, 0, None)
+            if isinstance(post_action, str)
+            else (list(post_action.keys())[0], list(post_action.values())[0], None)
+        )
+        for post_action in post_actions
+    ]
+
+    if previous_post_actions is not None:
+        all_post_actions.extend(
+            [
+                (
+                    (post_action, 0, source)
+                    if isinstance(post_action, str)
+                    else (list(post_action.keys())[0], list(post_action.values())[0], source)
+                )
+                for post_action, source in previous_post_actions
+            ]
+        )
+
+    all_post_actions.sort(key=lambda x: (x[1], "" if x[2] is None else x[2], x[0]))
+
+    order_help_text = """Post actions are applied starting with the lowest order number (which can be negative). If two post_actions have the same order, they are applied alphabetically by file name."""
+    file_help_text = """The file to apply to the output file. This file must be executable (using `chmod +x` on linux), and will receive the file path to the output file as the only command line argument. They should read from this file, make changes to the content, then re-write to the same file. Post actions which start with '$lecturemd' will be searched for in the lecturemd installation directory. All others are treated as a relative path."""
+
+    if panel_title is None:
+        panel_title = "Post Actions"
+
+    with Collapsible(title=panel_title, id=f"{id_prefix}-post-actions", collapsed=True):
+        if description is not None:
+            yield Markdown(description)
+        with Vertical(id=f"{id_prefix}-post-actions-grid", classes="filters-grid"):
+            with Horizontal(classes="header"):
+                file_label = Label("File", classes="file tooltip")
+                file_label.tooltip = file_help_text
+                yield file_label
+                order_label = Label("Order", classes="order tooltip")
+                order_label.tooltip = order_help_text
+                yield order_label
+                yield Label("Remove", classes="remove")
+            if len(all_post_actions) == 0:
+                yield Label(
+                    f"There are currently no post_actions applied to the {title} output.",
+                    id=f"{id_prefix}-post-actions-none",
+                )
+            else:
+                for post_action in all_post_actions:
+                    with Horizontal(
+                        id=f"{id_prefix}-post-action-{to_id_format(post_action[0])}",
+                        classes="row",
+                    ):
+                        yield Label(post_action[0], classes="file")
+                        yield Label(str(post_action[1]), classes="order")
+                        if post_action[2] is not None:
+                            yield Label(f"(from {post_action[2]})", classes="source")
+                        else:
+                            yield Button(
+                                "\U0001F5D1",
+                                id=f"remove-{id_prefix}-post-action-{to_id_format(post_action[0])}",
+                                classes="remove",
+                            )
+        panel_add_new = Vertical(
+            id=f"{id_prefix}-post-actions-add-container", classes="filters-add-container"
+        )
+        panel_add_new.border_title = "Add New post_action"
+        with panel_add_new:
+            with Horizontal(classes="header"):
+                file_label = Label("File", classes="file tooltip")
+                file_label.tooltip = file_help_text
+                yield file_label
+                order_label = Label("Order", classes="order tooltip")
+                order_label.tooltip = order_help_text
+                yield order_label
+                yield Label("Add", classes="add")
+            with Horizontal(id=f"{id_prefix}-post-actions-add-horizontal", classes="row"):
+                yield Input(
+                    placeholder="post_action.py",
+                    id=f"{id_prefix}-post-actions-add",
+                    classes="file",
+                )
+                yield Input(
+                    placeholder="0",
+                    value="0",
+                    id=f"{id_prefix}-post-actions-add-order",
+                    type="number",
+                    classes="order",
+                )
+                yield Button("+", id=f"{id_prefix}-post-actions-add-button", classes="add")
+        yield Button("Help", id=f"{id_prefix}-post-actions-help", classes="help")
+
+
 
 def maths_preamble():
     preambles = settings["general"]["maths preamble"]
     description = """These preambles are applied to all output formats. For HTML (web) formats, these are encased in math mode for MathJax. For LaTeX (pdf) formats these are applied directly."""
     title = "Maths Preambles"
-    for widget in preambles_panel(
+    yield from preambles_panel(
         preambles,
         "general-maths",
         "general maths",
         None,
         description=description,
         panel_title=title,
-    ):
-        yield widget
-
+    )
 
 def general_preambles():
     preambles = settings["general"]["preamble"]
@@ -438,10 +626,9 @@ def general_preambles():
     previous_preambles = [
         (preamble, "general-maths") for preamble in previous_preambles
     ]
-    for widget in preambles_panel(
+    yield from preambles_panel(
         preambles, "general", "general", previous_preambles=previous_preambles
-    ):
-        yield widget
+    )
     return
 
 
@@ -611,14 +798,11 @@ def colour_scheme_picker():
 def latex_settings():
     with TabbedContent(initial="latex_all"):
         with TabPane("All", id="latex_all"):
-            for widget in latex_all_settings():
-                yield widget
+            yield from latex_all_settings()
         with TabPane("Notes", id="latex_notes"):
-            for widget in latex_notes_settings():
-                yield widget
+            yield from latex_notes_settings()
         with TabPane("Slides", id="latex_slides"):
-            for widget in latex_slides_settings():
-                yield widget
+            yield from latex_slides_settings()
 
 
 # region latex all settings
@@ -634,39 +818,46 @@ def latex_all_settings():
         callback=lambda x: x.lower().lstrip("."),
         tooltip="The default image format for figures. This is ignored for individual figures with a specified format.",
     )
-
-    for widget in latex_filters():
-        yield widget
-    for widget in latex_preambles():
-        yield widget
+    yield from latex_filters()
+    yield from latex_post_actions()
+    yield from latex_preambles()
 
 
 def latex_filters():
     filters = settings["latex"]["filters"]
     previous_filters = settings["general"]["filters"]
     previous_filters = [(filter, "general") for filter in previous_filters]
-    for widget in filters_panel(
+    yield from filters_panel(
         filters,
         "latex",
         "LaTeX (pdf)",
         previous_filters,
         panel_title="LaTeX (pdf) Filters",
-    ):
-        yield widget
+    )
 
+def latex_post_actions():
+    post_actions = settings["latex"]["post"]
+    previous_post_actions = settings["general"]["post"]
+    previous_post_actions = [(post_action, "general") for post_action in previous_post_actions]
+    yield from post_actions_panel(
+        post_actions,
+        "latex",
+        "LaTeX (pdf)",
+        previous_post_actions,
+        panel_title="LaTeX (pdf) post-actions",
+    )
 
 def latex_preambles():
     preambles = settings["latex"]["preamble"]
     previous_preambles = settings["general"]["preamble"]
     previous_preambles = [(preamble, "general") for preamble in previous_preambles]
-    for widget in preambles_panel(
+    yield from preambles_panel(
         preambles,
         "latex",
         "LaTeX (pdf)",
         previous_preambles,
         panel_title="LaTeX (pdf) Preambles",
-    ):
-        yield widget
+    )
 
 
 # endregion
@@ -676,10 +867,9 @@ def latex_preambles():
 
 def latex_notes_settings():
     yield Label("These settings apply to the LaTeX (pdf) notes output format.")
-    for widget in latex_notes_filters():
-        yield widget
-    for widget in latex_notes_preambles():
-        yield widget
+    yield from latex_notes_filters()
+    yield from latex_notes_post_actions()
+    yield from latex_notes_preambles()
 
 
 def latex_notes_filters():
@@ -689,14 +879,29 @@ def latex_notes_filters():
     latex_filters = [(filter, "latex") for filter in latex_filters]
     general_filters = [(filter, "general") for filter in general_filters]
     previous_filters = latex_filters + general_filters
-    for widget in filters_panel(
+    yield from filters_panel(
         filters,
         "latex-notes",
         "LaTeX (pdf) notes",
         previous_filters,
         panel_title="LaTeX (pdf) Notes Filters",
-    ):
-        yield widget
+    )
+
+
+def latex_notes_post_actions():
+    post_actions = settings["latex"]["notes"]["post"]
+    latex_post_actions = settings["latex"]["post"]
+    general_post_actions = settings["general"]["post"]
+    latex_post_actions = [(post_action, "latex") for post_action in latex_post_actions]
+    general_post_actions = [(post_action, "general") for post_action in general_post_actions]
+    previous_post_actions = latex_post_actions + general_post_actions
+    yield from post_actions_panel(
+        post_actions,
+        "latex-notes",
+        "LaTeX (pdf) notes",
+        previous_post_actions,
+        panel_title="LaTeX (pdf) Notes post-actions",
+    )
 
 
 def latex_notes_preambles():
@@ -706,14 +911,13 @@ def latex_notes_preambles():
     latex_preambles = [(preamble, "latex") for preamble in latex_preambles]
     general_preambles = [(preamble, "general") for preamble in general_preambles]
     previous_preambles = latex_preambles + general_preambles
-    for widget in preambles_panel(
+    yield from preambles_panel(
         preambles,
         "latex-notes",
         "LaTeX (pdf) notes",
         previous_preambles,
         panel_title="LaTeX (pdf) Notes Preambles",
-    ):
-        yield widget
+    )
 
 
 # endregion
@@ -723,10 +927,9 @@ def latex_notes_preambles():
 
 def latex_slides_settings():
     yield Label("These settings apply to the LaTeX (pdf) slides output format.")
-    for widget in latex_slides_filters():
-        yield widget
-    for widget in latex_slides_preambles():
-        yield widget
+    yield from latex_slides_filters()
+    yield from latex_slides_post_actions()
+    yield from latex_slides_preambles()
 
 
 def latex_slides_filters():
@@ -736,14 +939,29 @@ def latex_slides_filters():
     latex_filters = [(filter, "latex") for filter in latex_filters]
     general_filters = [(filter, "general") for filter in general_filters]
     previous_filters = latex_filters + general_filters
-    for widget in filters_panel(
+    yield from filters_panel(
         filters,
         "latex-slides",
         "LaTeX (pdf) slides",
         previous_filters,
         panel_title="LaTeX (pdf) Slides Filters",
-    ):
-        yield widget
+    )
+
+
+def latex_slides_post_actions():
+    post_actions = settings["latex"]["slides"]["post"]
+    latex_post_actions = settings["latex"]["post"]
+    general_post_actions = settings["general"]["post"]
+    latex_post_actions = [(post_action, "latex") for post_action in latex_post_actions]
+    general_post_actions = [(post_action, "general") for post_action in general_post_actions]
+    previous_post_actions = latex_post_actions + general_post_actions
+    yield from post_actions_panel(
+        post_actions,
+        "latex-slides",
+        "LaTeX (pdf) slides",
+        previous_post_actions,
+        panel_title="LaTeX (pdf) Slides post-actions",
+    )
 
 
 def latex_slides_preambles():
@@ -753,14 +971,13 @@ def latex_slides_preambles():
     latex_preambles = [(preamble, "latex") for preamble in latex_preambles]
     general_preambles = [(preamble, "general") for preamble in general_preambles]
     previous_preambles = latex_preambles + general_preambles
-    for widget in preambles_panel(
+    yield from preambles_panel(
         preambles,
         "latex-slides",
         "LaTeX (pdf) slides",
         previous_preambles,
         panel_title="LaTeX (pdf) Slides Preambles",
-    ):
-        yield widget
+    )
 
 
 # endregion
@@ -774,14 +991,11 @@ def latex_slides_preambles():
 def html_settings():
     with TabbedContent(initial="html_all"):
         with TabPane("All", id="html_all"):
-            for widget in html_all_settings():
-                yield widget
+            yield from html_all_settings()
         with TabPane("Notes", id="html_notes"):
-            for widget in html_notes_settings():
-                yield widget
+            yield from html_notes_settings()
         with TabPane("Slides", id="html_slides"):
-            for widget in html_slides_settings():
-                yield widget
+            yield from html_slides_settings()
 
 
 # region html all settings
@@ -797,49 +1011,56 @@ def html_all_settings():
         callback=lambda x: x.lower().lstrip("."),
         tooltip="The default image format for figures. This is ignored for individual figures with a specified format.",
     )
-
-    for widget in html_styles():
-        yield widget
-    for widget in html_filters():
-        yield widget
-    for widget in html_preambles():
-        yield widget
+    yield from html_styles()
+    yield from html_filters()
+    yield from html_post_actions()
+    yield from html_preambles()
 
 
 def html_styles():
     styles = settings["html"]["styles"]
-    for widget in styles_panel(
+    yield from styles_panel(
         styles, "html", "html (web)", None, panel_title="HTML (web) Styles"
-    ):
-        yield widget
+    )
 
 
 def html_filters():
     filters = settings["html"]["filters"]
     previous_filters = settings["general"]["filters"]
     previous_filters = [(filter, "general") for filter in previous_filters]
-    for widget in filters_panel(
+    yield from filters_panel(
         filters,
         "html",
         "html (web)",
         previous_filters,
         panel_title="HTML (web) Filters",
-    ):
-        yield widget
+    )
+
+
+def html_post_actions():
+    post_actions = settings["html"]["post"]
+    previous_post_actions = settings["general"]["post"]
+    previous_post_actions = [(post_action, "general") for post_action in previous_post_actions]
+    yield from post_actions_panel(
+        post_actions,
+        "html",
+        "html (web)",
+        previous_post_actions,
+        panel_title="HTML (web) post-actions",
+    )
 
 
 def html_preambles():
     preambles = settings["html"]["preamble"]
     previous_preambles = settings["general"]["preamble"]
     previous_preambles = [(preamble, "general") for preamble in previous_preambles]
-    for widget in preambles_panel(
+    yield from preambles_panel(
         preambles,
         "html",
         "html (web)",
         previous_preambles,
         panel_title="HTML (web) Preambles",
-    ):
-        yield widget
+    )
 
 
 # endregion
@@ -849,26 +1070,23 @@ def html_preambles():
 
 def html_notes_settings():
     yield Label("These settings apply to the html (web) notes output format.")
-    for widget in html_notes_styles():
-        yield widget
-    for widget in html_notes_filters():
-        yield widget
-    for widget in html_notes_preambles():
-        yield widget
+    yield from html_notes_styles()
+    yield from html_notes_filters()
+    yield from html_notes_post_actions()
+    yield from html_notes_preambles()
 
 
 def html_notes_styles():
     styles = settings["html"]["notes"]["styles"]
     html_styles = settings["html"]["styles"]
     html_styles = [(style, "html") for style in html_styles]
-    for widget in styles_panel(
+    yield from styles_panel(
         styles,
         "html-notes",
         "html (web) notes",
         html_styles,
         panel_title="HTML (web) Notes Styles",
-    ):
-        yield widget
+    )
 
 
 def html_notes_filters():
@@ -878,14 +1096,29 @@ def html_notes_filters():
     html_filters = [(filter, "html") for filter in html_filters]
     general_filters = [(filter, "general") for filter in general_filters]
     previous_filters = html_filters + general_filters
-    for widget in filters_panel(
+    yield from filters_panel(
         filters,
         "html-notes",
         "html (web) notes",
         previous_filters,
         panel_title="HTML (web) Notes Filters",
-    ):
-        yield widget
+    )
+
+
+def html_notes_post_actions():
+    post_actions = settings["html"]["notes"]["post"]
+    html_post_actions = settings["html"]["post"]
+    general_post_actions = settings["general"]["post"]
+    html_post_actions = [(post_action, "html") for post_action in html_post_actions]
+    general_post_actions = [(post_action, "general") for post_action in general_post_actions]
+    previous_post_actions = html_post_actions + general_post_actions
+    yield from post_actions_panel(
+        post_actions,
+        "html-notes",
+        "html (web) notes",
+        previous_post_actions,
+        panel_title="HTML (web) Notes post-actions",
+    )
 
 
 def html_notes_preambles():
@@ -895,14 +1128,13 @@ def html_notes_preambles():
     html_preambles = [(preamble, "html") for preamble in html_preambles]
     general_preambles = [(preamble, "general") for preamble in general_preambles]
     previous_preambles = html_preambles + general_preambles
-    for widget in preambles_panel(
+    yield from preambles_panel(
         preambles,
         "html-notes",
         "html (web) notes",
         previous_preambles,
         panel_title="HTML (web) Notes Preambles",
-    ):
-        yield widget
+    )
 
 
 # endregion
@@ -912,26 +1144,23 @@ def html_notes_preambles():
 
 def html_slides_settings():
     yield Label("These settings apply to the html (web) slides output format.")
-    for widget in html_slides_styles():
-        yield widget
-    for widget in html_slides_filters():
-        yield widget
-    for widget in html_slides_preambles():
-        yield widget
+    yield from html_slides_styles()
+    yield from html_slides_filters()
+    yield from html_slides_post_actions()
+    yield from html_slides_preambles()
 
 
 def html_slides_styles():
     styles = settings["html"]["slides"]["styles"]
     html_styles = settings["html"]["styles"]
     html_styles = [(style, "html") for style in html_styles]
-    for widget in styles_panel(
+    yield from styles_panel(
         styles,
         "html-slides",
         "html (web) slides",
         html_styles,
         panel_title="HTML (web) Slides Styles",
-    ):
-        yield widget
+    )
 
 
 def html_slides_filters():
@@ -941,14 +1170,29 @@ def html_slides_filters():
     html_filters = [(filter, "html") for filter in html_filters]
     general_filters = [(filter, "general") for filter in general_filters]
     previous_filters = html_filters + general_filters
-    for widget in filters_panel(
+    yield from filters_panel(
         filters,
         "html-slides",
         "html (web) slides",
         previous_filters,
         panel_title="HTML (web) Slides Filters",
-    ):
-        yield widget
+    )
+
+
+def html_slides_post_actions():
+    post_actions = settings["html"]["slides"]["post"]
+    html_post_actions = settings["html"]["post"]
+    general_post_actions = settings["general"]["post"]
+    html_post_actions = [(post_action, "html") for post_action in html_post_actions]
+    general_post_actions = [(post_action, "general") for post_action in general_post_actions]
+    previous_post_actions = html_post_actions + general_post_actions
+    yield from post_actions_panel(
+        post_actions,
+        "html-slides",
+        "html (web) slides",
+        previous_post_actions,
+        panel_title="HTML (web) Slides post-actions",
+    )
 
 
 def html_slides_preambles():
@@ -958,14 +1202,13 @@ def html_slides_preambles():
     html_preambles = [(preamble, "html") for preamble in html_preambles]
     general_preambles = [(preamble, "general") for preamble in general_preambles]
     previous_preambles = html_preambles + general_preambles
-    for widget in preambles_panel(
+    yield from preambles_panel(
         preambles,
         "html-slides",
         "html (web) slides",
         previous_preambles,
         panel_title="HTML (web) Slides Preambles",
-    ):
-        yield widget
+    )
 
 
 # endregion
@@ -998,16 +1241,13 @@ class ConfigurationApp(App):
             with TabbedContent(initial="general"):
                 with TabPane("General", id="general"):
                     with VerticalScroll():
-                        for widget in general_settings():
-                            yield widget
+                        yield from general_settings()
                 with TabPane("LaTeX (pdf)", id="latex"):
                     with VerticalScroll():
-                        for widget in latex_settings():
-                            yield widget
+                        yield from latex_settings()
                 with TabPane("HTML (web)", id="html"):
                     with VerticalScroll():
-                        for widget in html_settings():
-                            yield widget
+                        yield from html_settings()
 
             with Horizontal(classes="buttons"):
                 yield Button(
@@ -1123,6 +1363,79 @@ class ConfigurationApp(App):
                 except:
                     pass
                 self.query_one(f"#{other_prefix}-filters-grid").mount(new_filter_row)
+
+    def handle_remove_post_action(
+        self,
+        id: str,
+        prefix: str,
+        keys: List[str],
+        also_remove_from: List[str] | None = None,
+    ):
+        post_action = id[len(f"remove-{prefix}-post-action-") :]
+        post_actions = get_from_keys_list(settings, keys)
+        for f in post_actions:
+            if (
+                list(f.keys())[0].replace("/", "-").replace("$", "-").replace(".", "-")
+                == post_action
+            ):
+                post_actions.remove(f)
+                break
+        else:
+            raise ValueError(f'Post-action "{post_action}" not found')
+        self.query_one(f"#{prefix}-post-action-{post_action}").remove()
+        if also_remove_from is not None:
+            for other_prefix in also_remove_from:
+                self.query_one(f"#{other_prefix}-post-action-{post_action}").remove()
+
+    def handle_add_post_action(
+        self,
+        id: str,
+        prefix: str,
+        keys: List[str],
+        also_add_to: List[str] | None = None,
+    ):
+        post_action = self.query_one(f"#{prefix}-post-actions-add").value
+        order = int(self.query_one(f"#{prefix}-post-actions-add-order").value)
+        post_actions = get_from_keys_list(settings, keys)
+        post_actions.append({post_action: order})
+        self.query_one(f"#{prefix}-post-actions-add").value = ""
+        self.query_one(f"#{prefix}-post-actions-add-order").value = "0"
+        new_post_action_label = Label(post_action, classes="file")
+        new_post_action_order = Label(str(order), classes="order")
+        new_post_action_remove = Button(
+            "\U0001F5D1",
+            id=f"remove-{prefix}-post-action-{to_id_format(post_action)}",
+            classes="remove",
+        )
+        new_post_action_row = Horizontal(
+            new_post_action_label,
+            new_post_action_order,
+            new_post_action_remove,
+            id=f"{prefix}-post-action-{to_id_format(post_action)}",
+            classes="row",
+        )
+        try:
+            self.query_one(f"#{prefix}-post-actions-none").remove()
+        except:
+            pass
+        self.query_one(f"#{prefix}-post-actions-grid").mount(new_post_action_row)
+        if also_add_to is not None:
+            for other_prefix in also_add_to:
+                new_post_action_label = Label(post_action, classes="file")
+                new_post_action_order = Label(str(order), classes="order")
+                new_post_action_source = Label(f"(from {prefix})", classes="source")
+                new_post_action_row = Horizontal(
+                    new_post_action_label,
+                    new_post_action_order,
+                    new_post_action_source,
+                    id=f"{other_prefix}-post-action-{to_id_format(post_action)}",
+                    classes="row",
+                )
+                try:
+                    self.query_one(f"#{other_prefix}-post-actions-none").remove()
+                except:
+                    pass
+                self.query_one(f"#{other_prefix}-post-actions-grid").mount(new_post_action_row)
 
     def handle_remove_preamble(
         self,
@@ -1257,6 +1570,15 @@ class ConfigurationApp(App):
     def on_button_pressed(self, message):
         global settings
         id = message.button.id
+
+        if id.endswith("-filters-help"):
+            self.push_screen(FiltersDescriptionScreen())
+            return
+
+        if id.endswith("-post-actions-help"):
+            self.push_screen(PostActionsDescriptionScreen())
+            return
+
         if id.startswith("remove-general-filter"):
             self.handle_remove_filter(
                 id,
