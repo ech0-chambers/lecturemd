@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="lecturemd",
-    version="0.1.2",
+    version="0.1.3",
     packages=[
         "lecturemd",
         "lecturemd.new",
